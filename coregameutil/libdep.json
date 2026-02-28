@@ -1,0 +1,14 @@
+{
+    "version" : "0.1.0",
+    "parent_directory" : "res://addons/coregameutil/",
+    "custom_types" :
+    [
+        {
+            "local_directory" : "Player/",
+            "name" : "Player",
+            "base_name" : "CharacterBody2D",
+            "script" : "Player.cs",
+            "sprite" : "Player.png"
+        }
+    ]
+}

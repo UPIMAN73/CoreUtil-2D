@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://hk2hg2k5hrcr"
+
+[deps]
+
+files=["res://addons/spriteanimatorutil/credits/credits.notes.translation", "res://addons/spriteanimatorutil/credits/credits.authors.translation", "res://addons/spriteanimatorutil/credits/credits.licenses.translation", "res://addons/spriteanimatorutil/credits/credits.urls.translation"]
+
+source_file="res://addons/spriteanimatorutil/credits/credits.csv"
+dest_files=["res://addons/spriteanimatorutil/credits/credits.notes.translation", "res://addons/spriteanimatorutil/credits/credits.authors.translation", "res://addons/spriteanimatorutil/credits/credits.licenses.translation", "res://addons/spriteanimatorutil/credits/credits.urls.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true
