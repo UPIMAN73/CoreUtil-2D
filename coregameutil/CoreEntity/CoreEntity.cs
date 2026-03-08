@@ -32,9 +32,7 @@ public partial class CoreEntity : Node2D
 
     // This is where the sprite/animation information goes
     // TODO
-
-    [Export]
-	private float deadzone = 0.2f;
+	// This will reference a completely different entity
 
 	[Export]
 	// Direction (easier for managing more complicated tasks)
@@ -60,7 +58,6 @@ public partial class CoreEntity : Node2D
 	private Vector2 currentSpeed = new Vector2();
 
     // This is where the functions belong
-
     public override void _Ready();
     public override void _Process();
 }

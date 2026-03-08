@@ -13,32 +13,9 @@ using Godot.Collections;
 [GlobalClass]
 public partial class Player : CharacterBody2D
 {
-	
-	[Export]
-	private float deadzone = 0.2f;
-
-	[Export]
-	// Direction (easier for managing more complicated tasks)
-	private Vector2 direction = new Vector2();
-
-	[Export]
-	// Spawn Position (this will be used to set the spawn point)
-	private Vector2 spawnPosition = new Vector2();
-
-	[Export]
-	// player's move speed	
-	private Vector2 moveSpeed = new Vector2();
-
-	[Export]
-	// player's shift speed	
-	private Vector2 shiftSpeed = new Vector2();
-
-	[Export]
-	// player's jump speed
-	private Vector2 jumpSpeed = new Vector2();
-
-	// player's Current speed
-	private Vector2 currentSpeed = new Vector2();
+	// Core entity
+	CoreEntity _coreEntity;
+	// NetworkEntity _networkEntity; // TODO Create a network entity that will handle the network interactions for the player
 
 	/*
 	 * Key input mappings
