@@ -4,6 +4,10 @@
  * @version : 0.1.0
  * @creation-date : February 17, 2026
  * @license : MIT
+ * @file : Player.cs
+ * @description : A player object that will handle the player's movement, 
+ * input, and other player-related mechanics. 
+ * This will be the character that the player will control in the game.
  */
 
 // Simple Imports
@@ -11,98 +15,12 @@ using Godot;
 using Godot.Collections;
 
 [GlobalClass]
-public partial class Player : CharacterBody2D
+public partial class Player : CoreEntity
 {
 	// Core entity
-	CoreEntity _coreEntity;
+	InputNode _inputNode; // TODO Create an input node that will handle the player's input such as keyboard, mouse, joystick, etc.
+	StatNode _statNode; // TODO Create a stat node that will handle the player's stats such as health, mana, stamina, etc.
 	// NetworkEntity _networkEntity; // TODO Create a network entity that will handle the network interactions for the player
-
-	/*
-	 * Key input mappings
-	 */
-	[Export]
-	private Dictionary<string, StringName> keyActionMapping = new Dictionary<string, StringName>();
-
-
-	// Handle user input
-	public override void _UnhandledInput(InputEvent @event)
-	{
-		UpdateInput();
-	}
-
-	public override void _Input(InputEvent @event)
-	{
-		if (@event is InputEventKey inputEventKey)
-		{
-			var keyInput = inputEventKey.AsText().Split("+");
-			foreach (string key in keyInput) 
-			{
-				GD.Print(key);
-				if (this.keyActionMapping.Keys.Contains(key)) {
-					var keyAction = keyActionMapping[key];
-					GD.Print(keyAction);
-					GD.Print(InputMap.ActionGetEvents(keyAction));
-					GD.Print(InputMap.ActionHasEvent(keyAction, inputEventKey));	
-				} else {
-					GD.Print("No action found for key: " + key );
-				}
-			}
-		}
-	}
-
-	// Initilize the key action status based on the key action mapping
-	private void InitilizeKeyActions()
-	{
-		if (keyActionMapping.Count > 0)
-		{
-			// TODO INPUT MAP 
-			foreach (var (name, action) in this.keyActionMapping)
-			{
-				var @currentEvent = new InputEventKey();
-				@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
-				if (InputMap.HasAction(action)) {
-					InputMap.ActionAddEvent(action, @currentEvent);
-				} else {
-					InputMap.AddAction(action, this.deadzone);
-					InputMap.ActionAddEvent(action, @currentEvent);
-				}
-			}
-		} else {
-			InputMap.LoadFromProjectSettings();
-		}
-	}
-
-	public void UpdateKeyActionsMapping()
-	{
-		// TODO
-		// set the value of the mappings based on a current state of a mapping effect
-	}
-
-	public void UpdatePlayerActions()
-	{
-		// TODO
-		// This is for tasks such as respawn, pause, play, and other game mechanics.
-	}
-	
-	// Update Keyboard inputs
-	public void UpdateInput()
-	{		
-		UpdateDirection();
-		UpdateSpeed();
-	}
-	
-	public void UpdateDirection() {
-		// Changing the direction based on the keyboard input
-		this.direction = Input.GetVector("left", "right", "up", "down");
-		//GD.Print(this.direction);
-	}
-	
-	public void UpdateSpeed() {
-		// Set the speed of the player movement based on the shift key
-		this.currentSpeed = Input.GetActionStrength("shift") * shiftSpeed + moveSpeed;
-		//GD.Print(this.currentSpeed);
-	}
-
 
 	public void RespawnPlayer()
 	{
@@ -118,6 +36,7 @@ public partial class Player : CharacterBody2D
 	// Based on the input and character's direction, we can move the player
 	public void MovePlayer()
 	{
+		this.currentSpeed = this.shiftSpeed * this.runSpeed + this.walkSpeed;
 		this.Position += this.currentSpeed * this.direction;
 	}
 
@@ -131,15 +50,24 @@ public partial class Player : CharacterBody2D
 	public override void _Ready()
 	{
 		GD.Print("Initilizing Key Actions");
-		InitilizeKeyActions();
-		RespawnPlayer();
+		_inputNode = new InputNode();
 		GD.Print("Player has been initialized");
+		GD.Print("Player's current position: " + this.Position);
+		RespawnPlayer();
+		_inputNode.InitilizeKeyActions();
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		// Handle the user input
+		UpdateInput();
 		MovePlayer();
+	}
+
+	public void UpdateInput()
+	{
+		(this.direction, this.shiftSpeed) = this._inputNode.UpdateInput();
+		//this.direction = playerInput.Direction;
+		//this.runSpeed = playerInput.RunSpeed;
 	}
 }

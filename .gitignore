@@ -20,3 +20,10 @@ mono_crash.*.json
 */lib/
 */obj/
 */packages
+*.import
+*.csproj
+*.sln
+*.uid
+
+
+coregameutil/*.png
