@@ -13,7 +13,6 @@
 
 using Godot;
 
-
  [GlobalClass]
 public partial class InputNode : Node2D
 {
@@ -32,13 +31,47 @@ public partial class InputNode : Node2D
 		{"Shift", "shift"},
 		{"Space", "jump"},
 		{"R", "respawn"},
-		{"Escape", "pause"}
+		{"Escape", "menu"},
+		{"E", "interact"}
+	};
+
+	[Export]
+	private Godot.Collections.Dictionary<string, StringName> defaultMouseActionMapping = new Godot.Collections.Dictionary<string, StringName>()
+	{
+		{"Left", "attack"},
+		{"Right", "block"},
+		{"Middle", "special"}
+	};
+
+	[Export]
+	private Godot.Collections.Dictionary<string, StringName> defaultInputActionMapping = new Godot.Collections.Dictionary<string, StringName>()
+	{
+		{"Space", "jump"},
+		{"R", "respawn"},
+		{"Escape", "menu"},
+		{"Left", "attack"},
+		{"Right", "block"},
+		{"Middle", "special"},
+		{"E", "interact"}
 	};
 
 	// Player keyboard input mapping
 	[Export]
 	private Godot.Collections.Dictionary<string, StringName> keyActionMapping = new Godot.Collections.Dictionary<string, StringName>();
 
+	// Player mouse input mapping
+	[Export]
+	private Godot.Collections.Dictionary<string, StringName> mouseActionMapping = new Godot.Collections.Dictionary<string, StringName>();
+
+	// Non directional input mapping (e.g. jump, attack, interact, etc.)
+	[Export]
+	private Godot.Collections.Dictionary<string, StringName> inputActionMapping = new Godot.Collections.Dictionary<string, StringName>();
+
+	// Called when the node enters the scene tree for the first time.
+	public override void _Ready()
+	{
+		InitilizeKeyActions();
+	}
 
 	// Handle user input
 	public override void _UnhandledInput(InputEvent @event)
@@ -56,9 +89,9 @@ public partial class InputNode : Node2D
 				GD.Print(key);
 				if (this.keyActionMapping.Keys.Contains(key)) {
 					var keyAction = keyActionMapping[key];
-					GD.Print(keyAction);
-					GD.Print(InputMap.ActionGetEvents(keyAction));
-					GD.Print(InputMap.ActionHasEvent(keyAction, inputEventKey));	
+					GD.Print("Action " + keyAction + " triggered by key: " + key);
+					// Deploy a signal so that other nodes can listen to the input actions and react accordingly
+					//SignalBus.EmitSignal("InputActionTriggered", keyAction);
 				} else {
 					GD.Print("No action found for key: " + key );
 				}
@@ -97,10 +130,145 @@ public partial class InputNode : Node2D
 				}
 			}
 		}
+
+		if (mouseActionMapping.Count > 0)		
+		{
+			// TODO INPUT MAP
+			foreach (var (name, action) in this.mouseActionMapping)
+			{
+				var @currentEvent = new InputEventMouseButton();
+				@currentEvent.ButtonIndex = OS.FindMouseButtonFromString(name);
+				if (InputMap.HasAction(action)) {
+					InputMap.ActionAddEvent(action, @currentEvent);
+				} else {
+					InputMap.AddAction(action, 0.2f);
+					InputMap.ActionAddEvent(action, @currentEvent);
+				}
+			}
+		} else {
+			// Use default mouse action mapping if no custom mapping is provided
+			foreach (var (name, action) in this.defaultMouseActionMapping)
+			{
+				var @currentEvent = new InputEventMouseButton();
+				@currentEvent.ButtonIndex = OS.FindMouseButtonFromString(name);
+				if (InputMap.HasAction(action)) {
+					InputMap.ActionAddEvent(action, @currentEvent);
+				} else {
+					InputMap.AddAction(action, 0.2f);
+					InputMap.ActionAddEvent(action, @currentEvent);
+				}
+			}
+		}
+
+		// TODO: Initilize non directional input mapping (e.g. jump, attack, interact, etc.)
+		if (inputActionMapping.Count > 0)		
+		{
+			//
+			foreach (var (name, action) in this.inputActionMapping)
+			{
+				var @currentEvent = new InputEventKey();
+				@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
+				if (InputMap.HasAction(action)) {
+					InputMap.ActionAddEvent(action, @currentEvent);
+				} else {
+					InputMap.AddAction(action, 0.2f);
+					InputMap.ActionAddEvent(action, @currentEvent);
+				}
+			}
+
+			//
+			foreach (var (name, action) in this.inputActionMapping)
+			{
+				var @currentEvent = new InputEventMouseButton();
+				@currentEvent.ButtonIndex = OS.FindMouseButtonFromString(name);
+				if (InputMap.HasAction(action)) {
+					InputMap.ActionAddEvent(action, @currentEvent);
+				} else {
+					InputMap.AddAction(action, 0.2f);
+					InputMap.ActionAddEvent(action, @currentEvent);
+				}
+			}	
+		} else {
+			// Use default non directional input mapping if no custom mapping is provided
+			foreach (var (name, action) in this.defaultInputActionMapping)
+			{
+				var @currentEvent = new InputEventKey();
+				@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
+				if (InputMap.HasAction(action)) {
+					InputMap.ActionAddEvent(action, @currentEvent);
+				} else {
+					InputMap.AddAction(action, 0.2f);
+					InputMap.ActionAddEvent(action, @currentEvent);
+				}
+			}
+
+			// Mouse events
+			foreach (var (name, action) in this.defaultInputActionMapping)
+			{
+				var @currentEvent = new InputEventMouseButton();
+				@currentEvent.ButtonIndex = OS.FindMouseButtonFromString(name);
+				if (InputMap.HasAction(action)) {
+					InputMap.ActionAddEvent(action, @currentEvent);
+				} else {
+					InputMap.AddAction(action, 0.2f);
+					InputMap.ActionAddEvent(action, @currentEvent);
+				}
+			}
+		}
 	}
 
+	// Update the custom input mapping based on the provided mapping
+	public void UpdateInputMapping(Godot.Collections.Dictionary<string, StringName> newKeyActionMapping
+		, Godot.Collections.Dictionary<string, StringName> newMouseActionMapping
+		, Godot.Collections.Dictionary<string, StringName> newInputActionMapping)
+	{
+		this.keyActionMapping = newKeyActionMapping;
+		this.mouseActionMapping = newMouseActionMapping;
+		this.inputActionMapping = newInputActionMapping;
+		InitilizeKeyActions();
+	}
+
+	// save the custom input mapping to a file
+	public void SaveInputMapping(string filePath) 
+	{
+		var file = new File();
+		if (file.Open(filePath, File.ModeFlags.Write) == Error.Ok)
+		{
+			var inputMappingData = new Godot.Collections.Dictionary<string, Godot.Collections.Dictionary<string, StringName>>()
+			{
+				{"keyActionMapping", this.keyActionMapping},
+				{"mouseActionMapping", this.mouseActionMapping},
+				{"inputActionMapping", this.inputActionMapping}
+			};
+			file.StoreLine(JSON.Print(inputMappingData));
+			file.Close();
+		}
+	}
+
+	// Load the custom input mapping from a file
+	public void LoadInputMapping(string filePath)
+	{
+		var file = new File();
+		if (file.Open(filePath, File.ModeFlags.Read) == Error.Ok)		{
+			var inputMappingData = JSON.Parse(file.GetLine()).Result as Godot.Collections.Dictionary<string, Godot.Collections.Dictionary<string, StringName>>;
+			file.Close(); // That way we can close the file without having to worry about the file being open when we try to load it again
+			
+			// Assignment mapping data to the current mapping
+			this.keyActionMapping = inputMappingData["keyActionMapping"];
+			this.mouseActionMapping = inputMappingData["mouseActionMapping"];
+			this.inputActionMapping = inputMappingData["inputActionMapping"];
+
+			// Initilize the key actions based on the loaded mapping
+			InitilizeKeyActions();
+		}
+	}
+
+	// 
+
+
 	// Update Keyboard inputs
-	public (Vector2 Direction, float RunSpeed) UpdateInput() {
+	public (Vector2 Direction, float RunSpeed) UpdateDirectionInput() {
 		return (Input.GetVector("left", "right", "up", "down"), Input.GetActionStrength("shift"));
 	}
 }
+
