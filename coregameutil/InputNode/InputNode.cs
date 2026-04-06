@@ -76,7 +76,7 @@ public partial class InputNode : Node2D
 	// Handle user input
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		UpdateInput();
+		//UpdateInput();
 	}
 
 	public override void _Input(InputEvent @event)
@@ -137,7 +137,7 @@ public partial class InputNode : Node2D
 			foreach (var (name, action) in this.mouseActionMapping)
 			{
 				var @currentEvent = new InputEventMouseButton();
-				@currentEvent.ButtonIndex = OS.FindMouseButtonFromString(name);
+				MouseButton current_button = @currentEvent.ButtonIndex;
 				if (InputMap.HasAction(action)) {
 					InputMap.ActionAddEvent(action, @currentEvent);
 				} else {
@@ -150,7 +150,7 @@ public partial class InputNode : Node2D
 			foreach (var (name, action) in this.defaultMouseActionMapping)
 			{
 				var @currentEvent = new InputEventMouseButton();
-				@currentEvent.ButtonIndex = OS.FindMouseButtonFromString(name);
+				MouseButton current_button = @currentEvent.ButtonIndex;
 				if (InputMap.HasAction(action)) {
 					InputMap.ActionAddEvent(action, @currentEvent);
 				} else {
@@ -180,7 +180,7 @@ public partial class InputNode : Node2D
 			foreach (var (name, action) in this.inputActionMapping)
 			{
 				var @currentEvent = new InputEventMouseButton();
-				@currentEvent.ButtonIndex = OS.FindMouseButtonFromString(name);
+				MouseButton current_button = @currentEvent.ButtonIndex;
 				if (InputMap.HasAction(action)) {
 					InputMap.ActionAddEvent(action, @currentEvent);
 				} else {
@@ -206,7 +206,7 @@ public partial class InputNode : Node2D
 			foreach (var (name, action) in this.defaultInputActionMapping)
 			{
 				var @currentEvent = new InputEventMouseButton();
-				@currentEvent.ButtonIndex = OS.FindMouseButtonFromString(name);
+				MouseButton current_button = @currentEvent.ButtonIndex;
 				if (InputMap.HasAction(action)) {
 					InputMap.ActionAddEvent(action, @currentEvent);
 				} else {
@@ -231,8 +231,8 @@ public partial class InputNode : Node2D
 	// save the custom input mapping to a file
 	public void SaveInputMapping(string filePath) 
 	{
-		var file = new File();
-		if (file.Open(filePath, File.ModeFlags.Write) == Error.Ok)
+		using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Write);
+		if (file.GetError() == Error.Ok)
 		{
 			var inputMappingData = new Godot.Collections.Dictionary<string, Godot.Collections.Dictionary<string, StringName>>()
 			{
@@ -240,35 +240,37 @@ public partial class InputNode : Node2D
 				{"mouseActionMapping", this.mouseActionMapping},
 				{"inputActionMapping", this.inputActionMapping}
 			};
-			file.StoreLine(JSON.Print(inputMappingData));
-			file.Close();
+			file.StoreLine(Json.Stringify(inputMappingData));
+			file.Flush();
 		}
+		file.Close();
 	}
 
 	// Load the custom input mapping from a file
 	public void LoadInputMapping(string filePath)
 	{
-		var file = new File();
-		if (file.Open(filePath, File.ModeFlags.Read) == Error.Ok)		{
-			var inputMappingData = JSON.Parse(file.GetLine()).Result as Godot.Collections.Dictionary<string, Godot.Collections.Dictionary<string, StringName>>;
-			file.Close(); // That way we can close the file without having to worry about the file being open when we try to load it again
+		// using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Read);
+		// if (file.GetError() == Error.Ok)		{
+		// 	var inputMappingData = Json.Parse(file.GetLine()).Result as Godot.Collections.Dictionary<string, Godot.Collections.Dictionary<string, StringName>>;
+		// 	file.Flush();
+		// 	file.Close();
 			
-			// Assignment mapping data to the current mapping
-			this.keyActionMapping = inputMappingData["keyActionMapping"];
-			this.mouseActionMapping = inputMappingData["mouseActionMapping"];
-			this.inputActionMapping = inputMappingData["inputActionMapping"];
+		// 	// Assignment mapping data to the current mapping
+		// 	this.keyActionMapping = inputMappingData["keyActionMapping"];
+		// 	this.mouseActionMapping = inputMappingData["mouseActionMapping"];
+		// 	this.inputActionMapping = inputMappingData["inputActionMapping"];
 
-			// Initilize the key actions based on the loaded mapping
-			InitilizeKeyActions();
-		}
+		// 	// Initilize the key actions based on the loaded mapping
+		// 	InitilizeKeyActions();
+		// }
 	}
 
-	// 
-
+	// Setup a signal for the input action triggered so that other nodes can listen to it and react accordingly
+	[Signal]
+	public delegate void InputActionTriggeredEventHandler(StringName action);
 
 	// Update Keyboard inputs
 	public (Vector2 Direction, float RunSpeed) UpdateDirectionInput() {
 		return (Input.GetVector("left", "right", "up", "down"), Input.GetActionStrength("shift"));
 	}
 }
-

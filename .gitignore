@@ -24,6 +24,3 @@ mono_crash.*.json
 *.csproj
 *.sln
 *.uid
-
-
-coregameutil/*.png

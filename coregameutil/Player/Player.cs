@@ -55,19 +55,28 @@ public partial class Player : CoreEntity
 		GD.Print("Player's current position: " + this.Position);
 		RespawnPlayer();
 		_inputNode.InitilizeKeyActions();
+
+		// handle the signal assocaited with the input action triggered so that we can react to the player's input
+		_inputNode.InputActionTriggered += OnInputActionTriggered;
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		UpdateInput();
+		//UpdateInput();
 		MovePlayer();
 	}
 
-	public void UpdateInput()
-	{
-		(this.direction, this.shiftSpeed) = this._inputNode.UpdateInput();
-		//this.direction = playerInput.Direction;
-		//this.runSpeed = playerInput.RunSpeed;
+	// public void UpdateInput()
+	// {
+	// 	(this.direction, this.shiftSpeed) = this._inputNode.UpdateInput();
+	// 	//this.direction = playerInput.Direction;
+	// 	//this.runSpeed = playerInput.RunSpeed;
+	// }
+
+	// Example of how to listen to the input action triggered signal and react accordingly
+	private void OnInputActionTriggered(StringName action) {
+		GD.Print("Input action triggered: " + action);
+		// React to the input action (e.g. move the player, attack, etc
 	}
 }
