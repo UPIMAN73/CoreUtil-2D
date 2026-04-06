@@ -11,6 +11,7 @@
  * other nodes to interact with the input.
  */
 
+using System.Threading.Tasks.Dataflow;
 using Godot;
 
  [GlobalClass]
@@ -249,9 +250,17 @@ public partial class InputNode : Node2D
 	// Load the custom input mapping from a file
 	public void LoadInputMapping(string filePath)
 	{
-		// using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Read);
+		using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Read);
+		if (file.GetError() != Error.Ok) {
+			GD.PrintErr("");
+			return;
+		} else {
+			GD.Print(file.GetLine());
+			return;
+		}
+
 		// if (file.GetError() == Error.Ok)		{
-		// 	var inputMappingData = Json.Parse(file.GetLine()).Result as Godot.Collections.Dictionary<string, Godot.Collections.Dictionary<string, StringName>>;
+		// 	using var inputMappingData = Json.Parse(file.GetLine()).Result as Godot.Collections.Dictionary<string, Godot.Collections.Dictionary<string, StringName>>;
 		// 	file.Flush();
 		// 	file.Close();
 			
