@@ -11,7 +11,6 @@
  * other nodes to interact with the input.
  */
 
-using System.Threading.Tasks.Dataflow;
 using Godot;
 
  [GlobalClass]
@@ -88,7 +87,7 @@ public partial class InputNode : Node2D
 			foreach (string key in keyInput) 
 			{
 				GD.Print(key);
-				if (this.keyActionMapping.Keys.Contains(key)) {
+				if (keyActionMapping.Keys.Contains(key)) {
 					var keyAction = keyActionMapping[key];
 					GD.Print("Action " + keyAction + " triggered by key: " + key);
 					// Deploy a signal so that other nodes can listen to the input actions and react accordingly
@@ -100,14 +99,22 @@ public partial class InputNode : Node2D
 		}
 	}
 
-	// Initilize the key action status based on the key action mapping
+	// Initilize the key action status based on the key action mappingCount
 	public void InitilizeKeyActions()
 	{
-		if (keyActionMapping.Count > 0)
-		{
-			// TODO INPUT MAP 
-			foreach (var (name, action) in this.keyActionMapping)
-			{
+		var kamCount = keyActionMapping.Count;
+		var mamCount = mouseActionMapping.Count;
+		var iamCount = inputActionMapping.Count;
+
+		// First check if the actions have been loaded
+		if ((kamCount == mamCount) && (mamCount == iamCount) && (iamCount == 0)) {
+			GD.PrintErr("None of the Actions have been previously defined. Please reload the actions.");
+			return;
+		}
+		
+		// Then do the keyboard mapping	
+		if (kamCount > 0) {
+			foreach (var (name, action) in this.keyActionMapping) {
 				var @currentEvent = new InputEventKey();
 				@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
 				if (InputMap.HasAction(action)) {
@@ -119,8 +126,7 @@ public partial class InputNode : Node2D
 			}
 		} else {
 			// Use default key action mapping if no custom mapping is provided
-			foreach (var (name, action) in this.defaultKeyActionMapping)
-			{
+			foreach (var (name, action) in this.defaultKeyActionMapping) {
 				var @currentEvent = new InputEventKey();
 				@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
 				if (InputMap.HasAction(action)) {
@@ -132,11 +138,9 @@ public partial class InputNode : Node2D
 			}
 		}
 
-		if (mouseActionMapping.Count > 0)		
+		if (mamCount > 0)		
 		{
-			// TODO INPUT MAP
-			foreach (var (name, action) in this.mouseActionMapping)
-			{
+			foreach (var (name, action) in this.mouseActionMapping) {
 				var @currentEvent = new InputEventMouseButton();
 				MouseButton current_button = @currentEvent.ButtonIndex;
 				if (InputMap.HasAction(action)) {
@@ -148,8 +152,7 @@ public partial class InputNode : Node2D
 			}
 		} else {
 			// Use default mouse action mapping if no custom mapping is provided
-			foreach (var (name, action) in this.defaultMouseActionMapping)
-			{
+			foreach (var (name, action) in this.defaultMouseActionMapping) {
 				var @currentEvent = new InputEventMouseButton();
 				MouseButton current_button = @currentEvent.ButtonIndex;
 				if (InputMap.HasAction(action)) {
@@ -162,11 +165,9 @@ public partial class InputNode : Node2D
 		}
 
 		// TODO: Initilize non directional input mapping (e.g. jump, attack, interact, etc.)
-		if (inputActionMapping.Count > 0)		
-		{
+		if (iamCount > 0) {
 			//
-			foreach (var (name, action) in this.inputActionMapping)
-			{
+			foreach (var (name, action) in this.inputActionMapping) {
 				var @currentEvent = new InputEventKey();
 				@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
 				if (InputMap.HasAction(action)) {
@@ -178,8 +179,7 @@ public partial class InputNode : Node2D
 			}
 
 			//
-			foreach (var (name, action) in this.inputActionMapping)
-			{
+			foreach (var (name, action) in this.inputActionMapping) {
 				var @currentEvent = new InputEventMouseButton();
 				MouseButton current_button = @currentEvent.ButtonIndex;
 				if (InputMap.HasAction(action)) {
@@ -191,8 +191,7 @@ public partial class InputNode : Node2D
 			}	
 		} else {
 			// Use default non directional input mapping if no custom mapping is provided
-			foreach (var (name, action) in this.defaultInputActionMapping)
-			{
+			foreach (var (name, action) in this.defaultInputActionMapping) {
 				var @currentEvent = new InputEventKey();
 				@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
 				if (InputMap.HasAction(action)) {
@@ -204,8 +203,7 @@ public partial class InputNode : Node2D
 			}
 
 			// Mouse events
-			foreach (var (name, action) in this.defaultInputActionMapping)
-			{
+			foreach (var (name, action) in this.defaultInputActionMapping) {
 				var @currentEvent = new InputEventMouseButton();
 				MouseButton current_button = @currentEvent.ButtonIndex;
 				if (InputMap.HasAction(action)) {
@@ -221,11 +219,11 @@ public partial class InputNode : Node2D
 	// Update the custom input mapping based on the provided mapping
 	public void UpdateInputMapping(Godot.Collections.Dictionary<string, StringName> newKeyActionMapping
 		, Godot.Collections.Dictionary<string, StringName> newMouseActionMapping
-		, Godot.Collections.Dictionary<string, StringName> newInputActionMapping)
+		, Godot.Collections.Dictionary<string, StringName> newInputActionMapping) 
 	{
-		this.keyActionMapping = newKeyActionMapping;
-		this.mouseActionMapping = newMouseActionMapping;
-		this.inputActionMapping = newInputActionMapping;
+		keyActionMapping = newKeyActionMapping;
+		mouseActionMapping = newMouseActionMapping;
+		inputActionMapping = newInputActionMapping;
 		InitilizeKeyActions();
 	}
 
@@ -233,45 +231,52 @@ public partial class InputNode : Node2D
 	public void SaveInputMapping(string filePath) 
 	{
 		using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Write);
-		if (file.GetError() == Error.Ok)
-		{
-			var inputMappingData = new Godot.Collections.Dictionary<string, Godot.Collections.Dictionary<string, StringName>>()
-			{
-				{"keyActionMapping", this.keyActionMapping},
-				{"mouseActionMapping", this.mouseActionMapping},
-				{"inputActionMapping", this.inputActionMapping}
-			};
-			file.StoreLine(Json.Stringify(inputMappingData));
-			file.Flush();
+		if (file == null) {
+			GD.PrintErr("Error reading file: " + filePath);
+			return;
+		} else {
+			if (file.GetError() == Error.Ok) {
+				var inputMappingData = new Godot.Collections.Dictionary<string, Godot.Collections.Dictionary<string, StringName>>()
+				{
+					{"keyActionMapping", keyActionMapping},
+					{"mouseActionMapping", mouseActionMapping},
+					{"inputActionMapping", inputActionMapping}
+				};
+				file.StoreLine(Json.Stringify(inputMappingData));
+				file.Flush();
+			} else {
+				GD.PrintErr("[ERROR] " + file.GetError());
+			}
+			file.Close();
 		}
-		file.Close();
 	}
 
 	// Load the custom input mapping from a file
 	public void LoadInputMapping(string filePath)
 	{
 		using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Read);
-		if (file.GetError() != Error.Ok) {
-			GD.PrintErr("");
+		if (file == null) {
+			GD.PrintErr("Error reading file: " + filePath);
 			return;
 		} else {
-			GD.Print(file.GetLine());
-			return;
-		}
-
-		// if (file.GetError() == Error.Ok)		{
-		// 	using var inputMappingData = Json.Parse(file.GetLine()).Result as Godot.Collections.Dictionary<string, Godot.Collections.Dictionary<string, StringName>>;
-		// 	file.Flush();
-		// 	file.Close();
+			if (file.GetError() == Error.Ok)		{
+			// using var inputMappingData = Json.Parse(file.GetLine(), false);
+			GD.Print(file.GetAsText());
+			file.Flush();
 			
-		// 	// Assignment mapping data to the current mapping
-		// 	this.keyActionMapping = inputMappingData["keyActionMapping"];
-		// 	this.mouseActionMapping = inputMappingData["mouseActionMapping"];
-		// 	this.inputActionMapping = inputMappingData["inputActionMapping"];
+			// // Assignment mapping data to the current mapping
+			// this.keyActionMapping = inputMappingData["keyActionMapping"];
+			// this.mouseActionMapping = inputMappingData["mouseActionMapping"];
+			// this.inputActionMapping = inputMappingData["inputActionMapping"];
 
-		// 	// Initilize the key actions based on the loaded mapping
-		// 	InitilizeKeyActions();
-		// }
+			// // Initilize the key actions based on the loaded mapping
+			// InitilizeKeyActions();
+			} else {
+				GD.PrintErr("[ERROR] " + file.GetError());
+			}
+			file.Close();
+		}
+		
 	}
 
 	// Setup a signal for the input action triggered so that other nodes can listen to it and react accordingly

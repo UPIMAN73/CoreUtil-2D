@@ -1,4 +1,3 @@
-#if TOOLS
 using System.Collections;
 using System.Collections.Generic;
 using Godot;
@@ -15,7 +14,7 @@ public partial class CoreGameUtil : EditorPlugin
 	public override void _EnterTree()
 	{
 		jsonParser = new Json();
-		var file_access_test = FileAccess.Open("res://addons/coregameutil/libdep.json", FileAccess.ModeFlags.Read).GetAsText();
+		var file_access_test = FileAccess.Open("res://addons/CoreUtil2D/libdep.json", FileAccess.ModeFlags.Read).GetAsText();
 		var parseStatus = jsonParser.Parse(file_access_test);
 		GD.Print(parseStatus);
 		
@@ -44,11 +43,10 @@ public partial class CoreGameUtil : EditorPlugin
 	}
 
 	// Print out dictionary contents
-	public void PrintDictionaryContents(Dictionary dictionaryObject)
+	public void PrintDictionaryContents(Godot.Collections.Dictionary dictionaryObject)
 	{
 		// 
-		foreach (var (key, value) in dictionaryObject)
-		{
+		foreach (var (key, value) in dictionaryObject) {
 			GD.Print(key, "\t:\t", value);
 		}
 	}
@@ -65,8 +63,7 @@ public partial class CoreGameUtil : EditorPlugin
 	{
 		PrintDictionaryContents(config);
 
-		if (!config.ContainsKey("custom_types"))
-		{
+		if (!config.ContainsKey("custom_types")) {
 			GD.PrintErr("Config File not configured properly. Did not see a 'custom_type' key.");
 			return;
 		} else {
@@ -74,17 +71,14 @@ public partial class CoreGameUtil : EditorPlugin
 			var staticConfigList = config["custom_types"].AsGodotArray();
 
 			// Add-on load code goes here.
-			foreach (var customTypeDataVariant in staticConfigList)
-			{
+			foreach (var customTypeDataVariant in staticConfigList) {
 				Dictionary customTypeData = customTypeDataVariant.AsGodotDictionary();
 				var customTypeDataError = CustomTypeCheck(customTypeData);
-				if (customTypeDataError != Error.Ok)
-				{
+				if (customTypeDataError != Error.Ok) {
 					GD.PrintErr(customTypeDataError);
 					GD.PrintErr(customTypeData);
 					continue;
-				} else
-				{
+				} else {
 					var directory_value = config["parent_directory"] + (customTypeData.ContainsKey("local_directory") ? customTypeData["local_directory"] : "").ToString();
 					CreateCustomType(directory_value + customTypeData["name"].ToString(), 
 								 directory_value + customTypeData["base_name"].ToString(), 
@@ -102,4 +96,3 @@ public partial class CoreGameUtil : EditorPlugin
 		RemoveCustomType("Player");
 	}
 }
-#endif

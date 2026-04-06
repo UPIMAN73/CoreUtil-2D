@@ -51,10 +51,11 @@ public partial class Player : CoreEntity
 	{
 		GD.Print("Initilizing Key Actions");
 		_inputNode = new InputNode();
+		_inputNode.LoadInputMapping("user://settings/input.json");
+		_inputNode.InitilizeKeyActions();
 		GD.Print("Player has been initialized");
 		GD.Print("Player's current position: " + this.Position);
 		RespawnPlayer();
-		_inputNode.InitilizeKeyActions();
 
 		// handle the signal assocaited with the input action triggered so that we can react to the player's input
 		_inputNode.InputActionTriggered += OnInputActionTriggered;

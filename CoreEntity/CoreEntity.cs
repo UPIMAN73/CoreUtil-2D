@@ -11,7 +11,7 @@
 using Godot;
 using Godot.Collections;
 
-[GlobalClass]
+
 /*
  * CoreEntity
  * This is a simple example of a global class in Godot. This class, `CoreEntity`, extends
@@ -23,6 +23,7 @@ using Godot.Collections;
  * This class also allows for custom naming, type references (character, background, etc.).
  * It also allows for more 
  */
+[GlobalClass]
 public partial class CoreEntity : Node2D
 {
 	[Export]

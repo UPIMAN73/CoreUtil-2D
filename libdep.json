@@ -1,6 +1,6 @@
 {
     "version" : "0.1.0",
-    "parent_directory" : "res://addons/CoreUtil2D",
+    "parent_directory" : "res://addons/CoreUtil2D/",
     "custom_types" :
     [
         {
