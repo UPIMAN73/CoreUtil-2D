@@ -70,6 +70,9 @@ public partial class InputNode : Node2D
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		GD.Print("InputNode is being initialized");
+		LoadInputMapping("user://settings/input.json");
+		GD.Print("InputNode has been initialized");
 		InitilizeKeyActions();
 	}
 
@@ -99,6 +102,10 @@ public partial class InputNode : Node2D
 		}
 	}
 
+	public bool IsActionsLoaded() {
+		return (keyActionMapping.Count > 0) && (mouseActionMapping.Count > 0) && (inputActionMapping.Count > 0);
+	}
+
 	// Initilize the key action status based on the key action mappingCount
 	public void InitilizeKeyActions()
 	{
@@ -107,112 +114,29 @@ public partial class InputNode : Node2D
 		var iamCount = inputActionMapping.Count;
 
 		// First check if the actions have been loaded
-		if ((kamCount == mamCount) && (mamCount == iamCount) && (iamCount == 0)) {
-			GD.PrintErr("None of the Actions have been previously defined. Please reload the actions.");
-			return;
+		if (!IsActionsLoaded()) {
+			GD.PrintErr("None of the Actions have been previously defined. We are going to use the default input mapping.");
+			UpdateInputMapping(defaultKeyActionMapping, defaultMouseActionMapping, defaultInputActionMapping);
 		}
-		
-		// Then do the keyboard mapping	
-		if (kamCount > 0) {
-			foreach (var (name, action) in this.keyActionMapping) {
-				var @currentEvent = new InputEventKey();
-				@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
-				if (InputMap.HasAction(action)) {
-					InputMap.ActionAddEvent(action, @currentEvent);
-				} else {
-					InputMap.AddAction(action, 0.2f);
-					InputMap.ActionAddEvent(action, @currentEvent);
-				}
-			}
+		if (kamCount == 0) {
+			keyActionMapping = defaultKeyActionMapping;
+			GD.Print("Key Action Mapping has been initialized with the default mapping.");
 		} else {
-			// Use default key action mapping if no custom mapping is provided
-			foreach (var (name, action) in this.defaultKeyActionMapping) {
-				var @currentEvent = new InputEventKey();
-				@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
-				if (InputMap.HasAction(action)) {
-					InputMap.ActionAddEvent(action, @currentEvent);
-				} else {
-					InputMap.AddAction(action, 0.2f);
-					InputMap.ActionAddEvent(action, @currentEvent);
-				}
-			}
+			GD.Print("Key Action Mapping has been initialized with the loaded mapping.");
 		}
 
-		if (mamCount > 0)		
-		{
-			foreach (var (name, action) in this.mouseActionMapping) {
-				var @currentEvent = new InputEventMouseButton();
-				MouseButton current_button = @currentEvent.ButtonIndex;
-				if (InputMap.HasAction(action)) {
-					InputMap.ActionAddEvent(action, @currentEvent);
-				} else {
-					InputMap.AddAction(action, 0.2f);
-					InputMap.ActionAddEvent(action, @currentEvent);
-				}
-			}
+		if (mamCount == 0) {
+			mouseActionMapping = defaultMouseActionMapping;
+			GD.Print("Mouse Action Mapping has been initialized with the default mapping.");
 		} else {
-			// Use default mouse action mapping if no custom mapping is provided
-			foreach (var (name, action) in this.defaultMouseActionMapping) {
-				var @currentEvent = new InputEventMouseButton();
-				MouseButton current_button = @currentEvent.ButtonIndex;
-				if (InputMap.HasAction(action)) {
-					InputMap.ActionAddEvent(action, @currentEvent);
-				} else {
-					InputMap.AddAction(action, 0.2f);
-					InputMap.ActionAddEvent(action, @currentEvent);
-				}
-			}
+			GD.Print("Mouse Action Mapping has been initialized with the loaded mapping.");
 		}
 
-		// TODO: Initilize non directional input mapping (e.g. jump, attack, interact, etc.)
-		if (iamCount > 0) {
-			//
-			foreach (var (name, action) in this.inputActionMapping) {
-				var @currentEvent = new InputEventKey();
-				@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
-				if (InputMap.HasAction(action)) {
-					InputMap.ActionAddEvent(action, @currentEvent);
-				} else {
-					InputMap.AddAction(action, 0.2f);
-					InputMap.ActionAddEvent(action, @currentEvent);
-				}
-			}
-
-			//
-			foreach (var (name, action) in this.inputActionMapping) {
-				var @currentEvent = new InputEventMouseButton();
-				MouseButton current_button = @currentEvent.ButtonIndex;
-				if (InputMap.HasAction(action)) {
-					InputMap.ActionAddEvent(action, @currentEvent);
-				} else {
-					InputMap.AddAction(action, 0.2f);
-					InputMap.ActionAddEvent(action, @currentEvent);
-				}
-			}	
+		if (iamCount == 0) {
+			inputActionMapping = defaultInputActionMapping;
+			GD.Print("Input Action Mapping has been initialized with the default mapping.");
 		} else {
-			// Use default non directional input mapping if no custom mapping is provided
-			foreach (var (name, action) in this.defaultInputActionMapping) {
-				var @currentEvent = new InputEventKey();
-				@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
-				if (InputMap.HasAction(action)) {
-					InputMap.ActionAddEvent(action, @currentEvent);
-				} else {
-					InputMap.AddAction(action, 0.2f);
-					InputMap.ActionAddEvent(action, @currentEvent);
-				}
-			}
-
-			// Mouse events
-			foreach (var (name, action) in this.defaultInputActionMapping) {
-				var @currentEvent = new InputEventMouseButton();
-				MouseButton current_button = @currentEvent.ButtonIndex;
-				if (InputMap.HasAction(action)) {
-					InputMap.ActionAddEvent(action, @currentEvent);
-				} else {
-					InputMap.AddAction(action, 0.2f);
-					InputMap.ActionAddEvent(action, @currentEvent);
-				}
-			}
+			GD.Print("Input Action Mapping has been initialized with the loaded mapping.");
 		}
 	}
 
@@ -224,7 +148,6 @@ public partial class InputNode : Node2D
 		keyActionMapping = newKeyActionMapping;
 		mouseActionMapping = newMouseActionMapping;
 		inputActionMapping = newInputActionMapping;
-		InitilizeKeyActions();
 	}
 
 	// save the custom input mapping to a file
@@ -232,7 +155,8 @@ public partial class InputNode : Node2D
 	{
 		using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Write);
 		if (file == null) {
-			GD.PrintErr("Error reading file: " + filePath);
+			GD.PrintErr("Error saving file: " + filePath);
+			GD.PrintErr("[ERROR] " + FileAccess.GetOpenError());
 			return;
 		} else {
 			if (file.GetError() == Error.Ok) {
@@ -247,7 +171,6 @@ public partial class InputNode : Node2D
 			} else {
 				GD.PrintErr("[ERROR] " + file.GetError());
 			}
-			file.Close();
 		}
 	}
 

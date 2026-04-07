@@ -18,8 +18,8 @@ using Godot.Collections;
 public partial class Player : CoreEntity
 {
 	// Core entity
-	InputNode _inputNode; // TODO Create an input node that will handle the player's input such as keyboard, mouse, joystick, etc.
-	StatNode _statNode; // TODO Create a stat node that will handle the player's stats such as health, mana, stamina, etc.
+	InputNode _inputNode;
+	StatNode _statNode;
 	// NetworkEntity _networkEntity; // TODO Create a network entity that will handle the network interactions for the player
 
 	public void RespawnPlayer()
@@ -51,8 +51,9 @@ public partial class Player : CoreEntity
 	{
 		GD.Print("Initilizing Key Actions");
 		_inputNode = new InputNode();
-		_inputNode.LoadInputMapping("user://settings/input.json");
 		_inputNode.InitilizeKeyActions();
+		_inputNode.SaveInputMapping("user://settings/input.json");
+		_inputNode.LoadInputMapping("user://settings/input.json");
 		GD.Print("Player has been initialized");
 		GD.Print("Player's current position: " + this.Position);
 		RespawnPlayer();
@@ -64,20 +65,19 @@ public partial class Player : CoreEntity
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		//UpdateInput();
+		UpdateInput();
 		MovePlayer();
 	}
 
-	// public void UpdateInput()
-	// {
-	// 	(this.direction, this.shiftSpeed) = this._inputNode.UpdateInput();
-	// 	//this.direction = playerInput.Direction;
-	// 	//this.runSpeed = playerInput.RunSpeed;
-	// }
+	 public void UpdateInput()
+	 {
+	 	(this.direction, this.shiftSpeed) = this._inputNode.UpdateDirectionInput();
+	 	//this.direction = playerInput.Direction;
+	 	//this.runSpeed = playerInput.RunSpeed;
+	 }
 
 	// Example of how to listen to the input action triggered signal and react accordingly
 	private void OnInputActionTriggered(StringName action) {
 		GD.Print("Input action triggered: " + action);
-		// React to the input action (e.g. move the player, attack, etc
 	}
 }
