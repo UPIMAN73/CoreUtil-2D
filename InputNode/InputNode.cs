@@ -11,7 +11,7 @@
  * other nodes to interact with the input.
  */
 
-using System;
+// using System;
 using Godot;
 
  [GlobalClass]
@@ -71,10 +71,11 @@ public partial class InputNode : Node2D
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		FileSystemManager.FFIOInit();
 		GD.Print("InputNode is being initialized");
+		InitilizeKeyActions();
 		LoadInputMapping("user://settings/input.json");
 		GD.Print("InputNode has been initialized");
-		InitilizeKeyActions();
 	}
 
 	// Handle user input
@@ -108,7 +109,7 @@ public partial class InputNode : Node2D
 		return (keyActionMapping.Count > 0) && (mouseActionMapping.Count > 0) && (inputActionMapping.Count > 0);
 	}
 
-	private void InitInputMapping(Godot.Collections.Dictionary<String, StringName> dict, StringName eventType)
+	private void InitInputMapping(Godot.Collections.Dictionary<string, StringName> dict, StringName eventType)
 	{
 		switch(eventType)
 		{
@@ -128,7 +129,7 @@ public partial class InputNode : Node2D
 			break;
 
 			case "joystick":
-			GD.PrintErr("[ERROR] Joystick Compatability is not yet developed. Please wait until we finish our integration with Gamepads/Joysticks.");
+			GD.PushWarning("[WARNING] Joystick Compatability is not yet developed. Please wait until we finish our integration with Gamepads/Joysticks.");
 			// foreach (var (name, action) in dict) {
 			// 	var @currentEvent = new InputEventKey();
 			// 	@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
@@ -159,7 +160,7 @@ public partial class InputNode : Node2D
 
 		// First check if the actions have been loaded
 		if (!IsActionsLoaded()) {
-			GD.PrintErr("None of the Actions have been previously defined. We are going to use the default input mapping.");
+			GD.PushWarning("[WARNING] None of the Actions have been previously defined. We are going to use the default input mapping.");
 			UpdateInputMapping(defaultKeyActionMapping, defaultMouseActionMapping, defaultInputActionMapping);
 		}
 		if (kamCount == 0) {
@@ -172,7 +173,7 @@ public partial class InputNode : Node2D
 
 		if (mamCount == 0) {
 			mouseActionMapping = defaultMouseActionMapping;
-			GD.Print("Mouse Action Mapping has been initialized with the default mapping.");
+			GD.PushWarning("[WARNING] Mouse Action Mapping has been initialized with the default mapping.");
 		} else {
 			GD.Print("Mouse Action Mapping has been initialized with the loaded mapping.");
 		}
@@ -180,7 +181,7 @@ public partial class InputNode : Node2D
 
 		if (iamCount == 0) {
 			inputActionMapping = defaultInputActionMapping;
-			GD.Print("Input Action Mapping has been initialized with the default mapping.");
+			GD.PushWarning("[WARNING] Input Action Mapping has been initialized with the default mapping.");
 		} else {
 			GD.Print("Input Action Mapping has been initialized with the loaded mapping.");
 		}
@@ -198,13 +199,13 @@ public partial class InputNode : Node2D
 	}
 
 	// save the custom input mapping to a file
-	public void SaveInputMapping(string filePath) 
+	public void SaveInputMappingOld(string filePath) 
 	{
 		// using directory access to ensure that the file access can be writable
-		using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Write);
+		using var file = Godot.FileAccess.Open(filePath, Godot.FileAccess.ModeFlags.Write);
 		if (file == null) {
 			GD.PrintErr("Error saving file: " + filePath);
-			GD.PrintErr("[ERROR] " + FileAccess.GetOpenError());
+			GD.PrintErr("[ERROR] " + Godot.FileAccess.GetOpenError());
 			return;
 		} else {
 			if (file.GetError() == Error.Ok) {
@@ -223,9 +224,9 @@ public partial class InputNode : Node2D
 	}
 
 	// Load the custom input mapping from a file
-	public void LoadInputMapping(string filePath)
+	public void LoadInputMappingOld(string filePath)
 	{
-		using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Read);
+		using var file = Godot.FileAccess.Open(filePath, Godot.FileAccess.ModeFlags.Read);
 		if (file == null) {
 			GD.PrintErr("Error reading file: " + filePath);
 			return;
@@ -247,7 +248,35 @@ public partial class InputNode : Node2D
 			}
 			file.Close();
 		}
-		
+	}
+
+	public void LoadInputMapping(StringName filePath)
+	{
+		FileSystemManager.AddFastFile(filePath);
+		var file = FileSystemManager.GetFastFile(filePath);
+		if (file == null) {
+			GD.PrintErr("[ERROR] Error reading file: " + filePath);
+		} else {
+			if (file.GetError() == Error.Ok)		{
+				using var inputMappingData = Json.ParseString(file.GetAsText());
+				GD.Print(inputMappingData);		
+				// Assignment mapping data to the current mapping
+				// this.keyActionMapping = inputMappingData["keyActionMapping"];
+				// this.mouseActionMapping = inputMappingData["mouseActionMapping"];
+				// this.inputActionMapping = inputMappingData["inputActionMapping"];
+
+				// Initilize the key actions based on the loaded mapping
+				InitilizeKeyActions();
+			} else {
+				GD.PrintErr("[ERROR] Failed to read file: " + filePath + " Error: " + file.GetError().ToString());
+			}
+			// FileSystemManager.CloseFile(filePath); -- IGNORE ---
+			// We don't need to load the input mapping file again, 
+			// so we can just remove it from the FFIO system to free up resources.
+			// It can get re-added if the user wants to load the input mapping again, 
+			// but for now we just want to free up resources since we don't need the file anymore.
+			FileSystemManager.RemoveFastFile(filePath);
+		}
 	}
 
 	// Setup a signal for the input action triggered so that other nodes can listen to it and react accordingly

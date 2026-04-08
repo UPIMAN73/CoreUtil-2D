@@ -52,7 +52,7 @@ public partial class Player : CoreEntity
 		GD.Print("Initilizing Key Actions");
 		_inputNode = new InputNode();
 		_inputNode.InitilizeKeyActions();
-		_inputNode.SaveInputMapping("user://settings/input.json");
+		_inputNode.SaveInputMappingOld("user://settings/input.json");
 		_inputNode.LoadInputMapping("user://settings/input.json");
 		GD.Print("Player has been initialized");
 		GD.Print("Player's current position: " + this.Position);
