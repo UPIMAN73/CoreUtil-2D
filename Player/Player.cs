@@ -18,8 +18,8 @@ using Godot.Collections;
 public partial class Player : CoreEntity
 {
 	// Core entity
-	InputNode _inputNode;
-	StatNode _statNode;
+	private InputNode _inputNode; 
+	//private StatNode _statNode;
 	// NetworkEntity _networkEntity; // TODO Create a network entity that will handle the network interactions for the player
 
 	public void RespawnPlayer()
@@ -50,28 +50,31 @@ public partial class Player : CoreEntity
 	public override void _Ready()
 	{
 		GD.Print("Initilizing Key Actions");
-		_inputNode = new InputNode();
-		_inputNode.InitilizeKeyActions();
-		_inputNode.SaveInputMappingOld("user://settings/input.json");
-		_inputNode.LoadInputMapping("user://settings/input.json");
+		_inputNode = (InputNode) FindChild("InputNode");
 		GD.Print("Player has been initialized");
 		GD.Print("Player's current position: " + this.Position);
 		RespawnPlayer();
 
 		// handle the signal assocaited with the input action triggered so that we can react to the player's input
-		_inputNode.InputActionTriggered += OnInputActionTriggered;
+		if (_inputNode != null)
+		{
+			GD.Print("[INFO] Succesfully found 'InputNode' as a child node of 'Player'");
+			_inputNode.InputActionTriggered += OnInputActionTriggered;
+		} else {
+			// Input Node doesn't exist here
+			GD.PrintErr("[ERROR] CANNOT FIND CHILD NODE 'INPUTNODE'");
+		}
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		UpdateInput();
 		MovePlayer();
 	}
 
 	 public void UpdateInput()
 	 {
-	 	(this.direction, this.shiftSpeed) = this._inputNode.UpdateDirectionInput();
+	 	(this.direction, this.shiftSpeed) = _inputNode.UpdateDirectionInput();
 	 	//this.direction = playerInput.Direction;
 	 	//this.runSpeed = playerInput.RunSpeed;
 	 }
@@ -79,5 +82,6 @@ public partial class Player : CoreEntity
 	// Example of how to listen to the input action triggered signal and react accordingly
 	private void OnInputActionTriggered(StringName action) {
 		GD.Print("Input action triggered: " + action);
+		UpdateInput();
 	}
 }

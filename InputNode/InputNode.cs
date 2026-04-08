@@ -202,10 +202,10 @@ public partial class InputNode : Node2D
 	public void SaveInputMappingOld(string filePath) 
 	{
 		// using directory access to ensure that the file access can be writable
-		using var file = Godot.FileAccess.Open(filePath, Godot.FileAccess.ModeFlags.Write);
+		using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Write);
 		if (file == null) {
 			GD.PrintErr("Error saving file: " + filePath);
-			GD.PrintErr("[ERROR] " + Godot.FileAccess.GetOpenError());
+			GD.PrintErr("[ERROR] " + FileAccess.GetOpenError());
 			return;
 		} else {
 			if (file.GetError() == Error.Ok) {
@@ -226,7 +226,7 @@ public partial class InputNode : Node2D
 	// Load the custom input mapping from a file
 	public void LoadInputMappingOld(string filePath)
 	{
-		using var file = Godot.FileAccess.Open(filePath, Godot.FileAccess.ModeFlags.Read);
+		using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Read);
 		if (file == null) {
 			GD.PrintErr("Error reading file: " + filePath);
 			return;
@@ -250,14 +250,36 @@ public partial class InputNode : Node2D
 		}
 	}
 
-	public void LoadInputMapping(StringName filePath)
+	public void SaveInputMapping(StringName filePath)
 	{
-		FileSystemManager.AddFastFile(filePath);
+		FileSystemManager.CreateDirectory(filePath);
+		FileSystemManager.AddFastFile(filePath, FileAccess.ModeFlags.Write);
 		var file = FileSystemManager.GetFastFile(filePath);
 		if (file == null) {
 			GD.PrintErr("[ERROR] Error reading file: " + filePath);
 		} else {
-			if (file.GetError() == Error.Ok)		{
+			if (file.GetError() == Error.Ok) {
+				var inputMappingData = new Godot.Collections.Dictionary<string, Godot.Collections.Dictionary<string, StringName>>()
+				{
+					{"keyActionMapping", keyActionMapping},
+					{"mouseActionMapping", mouseActionMapping},
+					{"inputActionMapping", inputActionMapping}
+				};
+				file.StoreLine(Json.Stringify(inputMappingData));
+				file.Flush();
+			}
+			FileSystemManager.CloseFile(filePath);
+		}
+	}
+
+	public void LoadInputMapping(StringName filePath)
+	{
+		FileSystemManager.AddFastFile(filePath, FileAccess.ModeFlags.Read);
+		var file = FileSystemManager.GetFastFile(filePath);
+		if (file == null) {
+			GD.PrintErr("[ERROR] Error reading file: " + filePath);
+		} else {
+			if (file.GetError() == Error.Ok) {
 				using var inputMappingData = Json.ParseString(file.GetAsText());
 				GD.Print(inputMappingData);		
 				// Assignment mapping data to the current mapping

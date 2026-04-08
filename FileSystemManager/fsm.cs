@@ -32,36 +32,39 @@ public static class FileSystemManager
 	// Check to see if the key is in the dictionary
 
 	// Check to see if a directory exists and if not create it
-	public static void CreateDirectory(string path)
+	public static void CreateDirectory(StringName path)
 	{
-	   using var dir = Godot.DirAccess.Open(path.ToString());
-	   if (dir == null) {
-		   GD.PrintErr("[ERROR] Failed to open directory: " + path);
-		   return;
-	   } else {
-		var openError = DirAccess.GetOpenError();
-		if (openError != Error.Ok) {
-			GD.PrintErr("[ERROR] Failed to open directory: " + path + " Error: " + openError);
-			return;
-		} else {
-			GD.Print("[INFO] Directory opened successfully: " + path);
-		
-			if (!dir.DirExists(path)) {
-				var err = dir.MakeDir(path);
-				if (err != Error.Ok) {
-					GD.PrintErr("[ERROR] Failed to create directory: " + path + " Error: " + err);
-				} else {
-					GD.Print("[INFO] Directory created successfully: " + path);
-				}
-			}
-		}
-		}
+        var absBasePath = path.ToString().Split("://")[0] + "://";
+        var dirPath = path.ToString().GetBaseDir();
+        using var dir = DirAccess.Open(absBasePath);
+        if (dir == null) {
+            GD.PrintErr("[ERROR] Failed to open directory: " + path + " on " + absBasePath);
+            return;
+        } else {
+            var openError = DirAccess.GetOpenError();
+            if (openError != Error.Ok) {
+                GD.PrintErr("[ERROR] Failed to open directory: " + absBasePath + " Error: " + openError);
+                return;
+            } else {
+                GD.Print("[INFO] Directory opened successfully: " + absBasePath);
+            
+                if (!dir.DirExists(dirPath)) {
+                    var err = dir.MakeDir(dirPath);
+                    if (err != Error.Ok) {
+                        GD.PrintErr("[ERROR] Failed to create directory: " + dirPath + " Error: " + err);
+                    } else {
+                        GD.Print("[INFO] Directory created successfully: " + dirPath);
+                    }
+                }
+            }
+        }
 	}
 
 	public static void FFIOInit()
 	{
         if (FFIO == null) {
 		    FFIO = new Godot.Collections.Dictionary<StringName, FileAccess>();
+            GD.Print("[INFO] Initilized FFIO System");
         }
 	}
 
@@ -80,28 +83,38 @@ public static class FileSystemManager
 	}
 
 	
-	public static void AddFastFile(StringName path)
+	public static void AddFastFile(StringName path, FileAccess.ModeFlags fileMode)
 	{
 		if (FFIO == null) {
-			FFIOInit();
+			GD.PrintErr("[ERROR] FFIO has not been initilized yet. Please do so by running the 'FileSystemManager.FFIOInit()' in your '_Ready()' function");
+            return;
 		}
+
+        var pathString = path.ToString();
 		if (!FFIO.ContainsKey(path)) {
-			if (!path.ToString().IsValidFileName()) {
-				GD.PrintErr("[ERROR] The file name is not valid: " + path);
+			if (!pathString.GetFile().IsValidFileName()) {
+				GD.PrintErr("[ERROR] The file name is not valid: " + pathString);
 				return;
-			}
-			CreateDirectory(path);
-			FFIO[path] = FileAccess.Open(path, FileAccess.ModeFlags.ReadWrite);
-			if (FFIO[path] == null) {
-				GD.PrintErr("[ERROR] Failed to open file: " + path);
-				return;
-			} else if (FFIO[path].GetError() != Error.Ok) {
-				GD.PrintErr("[ERROR] Failed to open file: " + path + " Error: " + FFIO[path].GetError());
-				FFIO.Remove(path);
-				return;
-			}
+			} else {
+                GD.Print("[INFO] Validity check complete. Begin openning file: " + pathString);
+                GD.Print(pathString.GetBaseDir() + pathString.GetFile());
+                using var file = FileAccess.Open(pathString, fileMode);
+                GD.Print(file);
+                GD.Print(fileMode);
+                if (file == null) {
+                    GD.PrintErr("[ERROR] Failed to open file: " + pathString);
+                } else {
+                    if (file.GetError() != Error.Ok) {
+                        GD.PrintErr("[ERROR] Failed to open file: " + pathString + " Error: " + file.GetError());
+                    } else
+                    {
+                        GD.Print("[INFO] File has opened succesfully: " + pathString);
+                        FFIO[path] = file;
+                    }
+                }
+            }
 		} else {
-			GD.PrintErr("[ERROR] The file is already in the FFIO system: " + path);
+			GD.PrintErr("[ERROR] The file is already in the FFIO system: " + pathString);
 		}
 	}
 
