@@ -11,6 +11,7 @@
  * other nodes to interact with the input.
  */
 
+using System;
 using Godot;
 
  [GlobalClass]
@@ -102,8 +103,51 @@ public partial class InputNode : Node2D
 		}
 	}
 
-	public bool IsActionsLoaded() {
+	public bool IsActionsLoaded() 
+	{
 		return (keyActionMapping.Count > 0) && (mouseActionMapping.Count > 0) && (inputActionMapping.Count > 0);
+	}
+
+	private void InitInputMapping(Godot.Collections.Dictionary<String, StringName> dict, StringName eventType)
+	{
+		switch(eventType)
+		{
+			case "keyboard":
+			foreach (var (name, action) in dict) {
+				var @currentEvent = new InputEventKey();
+				@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
+				AddKeyEvent(action, @currentEvent);
+			}
+			break;
+
+			case "mouse":
+			foreach (var (name, action) in dict) {
+				var @currentEvent = new InputEventMouseButton();
+				AddKeyEvent(action, @currentEvent);
+			}
+			break;
+
+			case "joystick":
+			GD.PrintErr("[ERROR] Joystick Compatability is not yet developed. Please wait until we finish our integration with Gamepads/Joysticks.");
+			// foreach (var (name, action) in dict) {
+			// 	var @currentEvent = new InputEventKey();
+			// 	@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
+			// 	AddKeyEvent(action, @currentEvent);
+			// }
+			break;
+
+			default:
+			GD.PrintErr("[ERROR] InputNode:InitInputMapping failed due to eventType not being a valid type: " + eventType);
+			break;
+		}
+	}
+
+	private void AddKeyEvent(StringName action, InputEvent @currentEvent)
+	{
+		if (!InputMap.HasAction(action)) {
+			InputMap.AddAction(action, 0.2f);
+		}
+		InputMap.ActionAddEvent(action, @currentEvent);
 	}
 
 	// Initilize the key action status based on the key action mappingCount
@@ -124,6 +168,7 @@ public partial class InputNode : Node2D
 		} else {
 			GD.Print("Key Action Mapping has been initialized with the loaded mapping.");
 		}
+		InitInputMapping(keyActionMapping, "keyboard");
 
 		if (mamCount == 0) {
 			mouseActionMapping = defaultMouseActionMapping;
@@ -131,6 +176,7 @@ public partial class InputNode : Node2D
 		} else {
 			GD.Print("Mouse Action Mapping has been initialized with the loaded mapping.");
 		}
+		InitInputMapping(mouseActionMapping, "mouse");
 
 		if (iamCount == 0) {
 			inputActionMapping = defaultInputActionMapping;
@@ -138,12 +184,13 @@ public partial class InputNode : Node2D
 		} else {
 			GD.Print("Input Action Mapping has been initialized with the loaded mapping.");
 		}
+		InitInputMapping(inputActionMapping, "joystick");
 	}
 
 	// Update the custom input mapping based on the provided mapping
-	public void UpdateInputMapping(Godot.Collections.Dictionary<string, StringName> newKeyActionMapping
-		, Godot.Collections.Dictionary<string, StringName> newMouseActionMapping
-		, Godot.Collections.Dictionary<string, StringName> newInputActionMapping) 
+	public void UpdateInputMapping(	Godot.Collections.Dictionary<string, StringName> newKeyActionMapping,
+									Godot.Collections.Dictionary<string, StringName> newMouseActionMapping,
+									Godot.Collections.Dictionary<string, StringName> newInputActionMapping)
 	{
 		keyActionMapping = newKeyActionMapping;
 		mouseActionMapping = newMouseActionMapping;
@@ -153,6 +200,7 @@ public partial class InputNode : Node2D
 	// save the custom input mapping to a file
 	public void SaveInputMapping(string filePath) 
 	{
+		// using directory access to ensure that the file access can be writable
 		using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Write);
 		if (file == null) {
 			GD.PrintErr("Error saving file: " + filePath);
@@ -183,11 +231,11 @@ public partial class InputNode : Node2D
 			return;
 		} else {
 			if (file.GetError() == Error.Ok)		{
-			// using var inputMappingData = Json.Parse(file.GetLine(), false);
-			GD.Print(file.GetAsText());
+			using var inputMappingData = Json.ParseString(file.GetAsText());
+			GD.Print(inputMappingData);
 			file.Flush();
 			
-			// // Assignment mapping data to the current mapping
+			// Assignment mapping data to the current mapping
 			// this.keyActionMapping = inputMappingData["keyActionMapping"];
 			// this.mouseActionMapping = inputMappingData["mouseActionMapping"];
 			// this.inputActionMapping = inputMappingData["inputActionMapping"];
