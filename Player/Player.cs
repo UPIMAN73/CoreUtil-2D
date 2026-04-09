@@ -11,6 +11,7 @@
  */
 
 // Simple Imports
+using System.Runtime.CompilerServices;
 using Godot;
 using Godot.Collections;
 
@@ -18,7 +19,7 @@ using Godot.Collections;
 public partial class Player : CoreEntity
 {
 	// Core entity
-	private InputNode _inputNode; 
+	private InputNode _inputNode;
 	//private StatNode _statNode;
 	// NetworkEntity _networkEntity; // TODO Create a network entity that will handle the network interactions for the player
 
@@ -49,20 +50,45 @@ public partial class Player : CoreEntity
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-		GD.Print("Initilizing Key Actions");
-		_inputNode = (InputNode) FindChild("InputNode");
-		GD.Print("Player has been initialized");
-		GD.Print("Player's current position: " + this.Position);
+		ExceptionManager.LogInfo("Player", "_Ready", "Initializing Key Actions");
+		initializeInputNode();
+		ExceptionManager.LogInfo("Player", "_Ready", "Player has been initialized");
+		ExceptionManager.LogInfo("Player", "_Ready", "Player's current position: " + this.Position);
 		RespawnPlayer();
+	}
 
-		// handle the signal assocaited with the input action triggered so that we can react to the player's input
+	public override void _ExitTree()
+	{
 		if (_inputNode != null)
 		{
-			GD.Print("[INFO] Succesfully found 'InputNode' as a child node of 'Player'");
+			_inputNode.InputActionTriggered -= OnInputActionTriggered;
+		}
+	}
+
+	private void initializeInputNode()
+	{
+		_inputNode = GetNodeOrNull<InputNode>("InputNode");
+
+		// Check to see if a child input node exists
+		// if not, then create one and add it as a child to the player node.
+		if (_inputNode == null) {
+			// Input Node doesn't exist here
+			ExceptionManager.LogWarning("Player", "initializeInputNode", "Cannot find child node 'InputNode' of 'Player'.");
+			ExceptionManager.LogInfo("Player", "initializeInputNode", "Player will need to create an 'InputNode' child node in order to handle player input.");
+			AddChild(new InputNode(), false);
+			_inputNode = GetNodeOrNull<InputNode>("InputNode");
+			ExceptionManager.LogInfo("Player", "initializeInputNode", "Created new 'InputNode' child node for 'Player'.");
+		} else {
+			ExceptionManager.LogInfo("Player", "initializeInputNode", "Found 'InputNode' child node for 'Player'.");
+		}
+
+		// Check to see if the input node was successfully created or found and if so, 
+		// connect the input action triggered signal to the player node so that we can react to player input.
+		if (_inputNode != null) {
 			_inputNode.InputActionTriggered += OnInputActionTriggered;
 		} else {
-			// Input Node doesn't exist here
-			GD.PrintErr("[ERROR] CANNOT FIND CHILD NODE 'INPUTNODE'");
+			ExceptionManager.LogError("Player", "initializeInputNode", "Failed to initialize 'InputNode' for 'Player'. Player input will not work.");
+			
 		}
 	}
 
@@ -81,7 +107,7 @@ public partial class Player : CoreEntity
 
 	// Example of how to listen to the input action triggered signal and react accordingly
 	private void OnInputActionTriggered(StringName action) {
-		GD.Print("Input action triggered: " + action);
+		ExceptionManager.LogInfo("Player", "OnInputActionTriggered", "Input action triggered: " + action);
 		UpdateInput();
 	}
 }
