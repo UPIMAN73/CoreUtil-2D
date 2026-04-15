@@ -40,27 +40,26 @@ public static class FileSystemManager
 	/// <param name="path">The path to the directory to check or create.</param>
 	public static void CreateDirectory(StringName path)
 	{
-		StringName methodName = "CreateDirectory";
 		var absBasePath = path.ToString().Split("://")[0] + "://";
 		var dirPath = path.ToString().GetBaseDir();
 		using var dir = DirAccess.Open(absBasePath);
 		if (dir == null) {
-			ExceptionManager.LogError(CLASS_NAME, methodName, "Failed to open directory: " + path + " on " + absBasePath);
+			ExceptionManager.LogError(CLASS_NAME, "CreateDirectory", "Failed to open directory: " + absBasePath + " on " + absBasePath);
 			return;
 		} else {
 			var openError = DirAccess.GetOpenError();
 			if (openError != Error.Ok) {
-				ExceptionManager.LogError(CLASS_NAME, methodName, "Failed to open directory: " + absBasePath + " Error: " + openError);
+				ExceptionManager.LogError(CLASS_NAME, "CreateDirectory", "Failed to open directory: " + absBasePath + " Error: " + openError);
 				return;
 			} else {
-				ExceptionManager.LogInfo(CLASS_NAME, methodName, "Directory opened successfully: " + absBasePath);
+				ExceptionManager.LogInfo(CLASS_NAME, "CreateDirectory", "Directory opened successfully: " + absBasePath);
 			
 				if (!dir.DirExists(dirPath)) {
 					var err = dir.MakeDir(dirPath);
 					if (err != Error.Ok) {
-						ExceptionManager.LogError(CLASS_NAME, methodName, "Failed to create directory: " + dirPath + " Error: " + err);
+						ExceptionManager.LogError(CLASS_NAME, "CreateDirectory", "Failed to create directory: " + dirPath + " Error: " + err);
 					} else {
-						ExceptionManager.LogInfo(CLASS_NAME, methodName, "Directory created successfully: " + dirPath);
+						ExceptionManager.LogInfo(CLASS_NAME, "CreateDirectory", "Directory created successfully: " + dirPath);
 					}
 				}
 			}

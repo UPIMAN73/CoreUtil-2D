@@ -12,6 +12,12 @@
 
 using Godot;
 
+public struct ExceptionReference
+{
+    StringName className;
+    StringName methodName;
+}
+
 public static class ExceptionManager
 {
 	/// <summary>
