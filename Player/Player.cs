@@ -118,6 +118,12 @@ public partial class Player : CoreEntity
 		}
 	}
 
+	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	public override void _Process(double delta)
+	{
+		MovePlayer();
+	}
+
 	/// <summary>
 	/// Initializes the input node for the player. 
 	/// This will check to see if a child node of type InputNode exists and if not, 
@@ -153,12 +159,6 @@ public partial class Player : CoreEntity
 		} else {
 			ExceptionManager.LogCritical(exceptionReference, "Failed to initialize 'InputNode' for 'Player'. Player input will not work.");
 		}
-	}
-
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
-	{
-		MovePlayer();
 	}
 
 	/// <summary>
