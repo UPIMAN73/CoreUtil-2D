@@ -95,6 +95,7 @@ public partial class Player : CoreEntity
 		// Note: 
 		// I totally didn't spend a few days trying to figure out why the player wasn't moving and then realized 
 		// that I forgot to initialize the walk and run speed vectors. =)
+		// Going to replace this statements with a stats statements to allow for unique definitions to be passed.
 		this.walkSpeed = new Vector2(5, 5);
 		this.runSpeed = new Vector2(5, 5);
 		RespawnPlayer();
@@ -144,7 +145,8 @@ public partial class Player : CoreEntity
 		if (_inputNode == null) {
 			// Input Node doesn't exist here
 			ExceptionManager.LogWarning(exceptionReference, "Cannot find child node 'InputNode' of 'Player'.");
-			ExceptionManager.LogInfo(exceptionReference, "Player will need to create an 'InputNode' child node in order to handle player input.");
+			ExceptionManager.LogInfo(exceptionReference, 
+									 "Player will need to create an 'InputNode' child node in order to handle player input.");
 			_inputNode = new InputNode();
 			AddChild(_inputNode, false);
 			ExceptionManager.LogInfo(exceptionReference, "Created new 'InputNode' child node for 'Player'.");
