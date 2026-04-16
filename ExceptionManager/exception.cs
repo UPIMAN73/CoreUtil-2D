@@ -10,16 +10,29 @@
  * It will also allow for the program to be able to log exceptions in a way that is easy to read and understand.
  */
 
+using System.Collections;
 using Godot;
 
+/// <summary>
+/// This struct is going to be used to store a reference to an exception that is thrown by
+/// the program.
+/// </summary>
 public struct ExceptionReference
 {
-    StringName className;
-    StringName methodName;
+    public StringName className;
+    public StringName methodName;
+    public System.Exception exception;
 }
 
 public static class ExceptionManager
 {
+
+    // Exception Reference
+    private static ExceptionReference exceptionReference = new ExceptionReference{ className = "ExceptionManager" };
+
+    // TODO: Add a way to store exceptions in a way that is safe
+    // Queue<ExceptionReference> exceptionQueue = new Queue<ExceptionReference>();
+
 	/// <summary>
     /// Formats a log message with the class name, method name, and the message itself.
     /// </summary>
@@ -30,9 +43,9 @@ public static class ExceptionManager
     /// The formatted log message.
     /// </returns>
 
-	public static StringName formatMessage(StringName className, StringName methodName, StringName message)
+	public static StringName formatMessage(ExceptionReference eref, StringName message)
 	{
-		return className + "." + methodName + "(): " + message;
+		return eref.className + "." + eref.methodName + "(): " + message;
 	}
 
     /// <summary>
@@ -48,9 +61,9 @@ public static class ExceptionManager
     ///     ExceptionManager.LogError("MyClass", "MyMethod", "This is an error message.");
     /// }
     /// </example>
-	public static void LogError(StringName className, StringName methodName, StringName message)
+	public static void LogError(ExceptionReference eref, StringName message)
 	{
-		GD.PrintErr("[ERROR] " + formatMessage(className, methodName, message));
+		GD.PrintErr("[ERROR] " + formatMessage(eref, message));
 	}
 
     /// <summary>
@@ -62,9 +75,9 @@ public static class ExceptionManager
     /// <example>
     /// ExceptionManager.LogWarning("MyClass", "MyMethod", "This is a warning message.");
     /// </example>
-	public static void LogWarning(StringName className, StringName methodName, StringName message)
+	public static void LogWarning(ExceptionReference eref, StringName message)
 	{
-		GD.Print("[WARNING] " + formatMessage(className, methodName, message));
+		GD.Print("[WARNING] " + formatMessage(eref, message));
 	}
 
     /// <summary>
@@ -77,9 +90,9 @@ public static class ExceptionManager
     /// <example>
     /// ExceptionManager.LogInfo("MyClass", "MyMethod", "This is an informational message.");
     /// </example>
-	public static void LogInfo(StringName className, StringName methodName, StringName message)
+	public static void LogInfo(ExceptionReference eref, StringName message)
 	{
-		GD.Print("[INFO] " + formatMessage(className, methodName, message));
+		GD.Print("[INFO] " + formatMessage(eref, message));
 	}
 
     /// <summary>
@@ -91,9 +104,9 @@ public static class ExceptionManager
     /// <example>
     /// ExceptionManager.LogDebug("MyClass", "MyMethod", "This is a debug message.");
     /// </example>
-	public static void LogDebug(StringName className, StringName methodName, StringName message)
+	public static void LogDebug(ExceptionReference eref, StringName message)
 	{
-		GD.Print("[DEBUG] " + formatMessage(className, methodName, message));
+		GD.Print("[DEBUG] " + formatMessage(eref, message));
 	}
 
     /// <summary>
@@ -105,9 +118,9 @@ public static class ExceptionManager
     /// <example>
     /// ExceptionManager.LogCritical("MyClass", "MyMethod", "This is a critical message.");
     /// </example>
-	public static void LogCritical(StringName className, StringName methodName, StringName message)
+	public static void LogCritical(ExceptionReference eref, StringName message)
 	{
-		GD.PrintErr("[CRITICAL] " + formatMessage(className, methodName, message));
+		GD.PrintErr("[CRITICAL] " + formatMessage(eref, message));
 	}
 
     /// <summary>
@@ -123,13 +136,13 @@ public static class ExceptionManager
     ///     ExceptionManager.LogException(ex, "MyClass", "MyMethod");
     /// }
     /// </example>
-	public static void LogException(System.Exception ex, StringName className, StringName methodName)
+	public static void LogException(ExceptionReference eref)
 	{
-		if (ex == null) {
+		if (eref.exception == null) {
 			return;
 		} else {
-			GD.PrintErr("[EXCEPTION] " + formatMessage(className, methodName, ex.GetType().Name + ": " + ex.Message));
-			GD.PrintErr("[STACK TRACE] " + ex.StackTrace);
+			GD.PrintErr("[EXCEPTION] " + formatMessage(eref, eref.exception.GetType().Name + ": " + eref.exception.Message));
+			GD.PrintErr("[STACK TRACE] " + eref.exception.StackTrace);
 		}
 	}
 
@@ -157,10 +170,10 @@ public static class ExceptionManager
 				file.Flush();
 				FileSystemManager.CloseFile(filePath);
 			} else {
-				LogError("ExceptionManager", "WriteLogToFile", "Failed to write log to file: " + filePath);
+				LogError(new ExceptionReference { className = "ExceptionManager", methodName = "WriteLogToFile" }, "Failed to write log to file: " + filePath);
 			}
 		} catch (System.Exception ex) {
-			LogException(ex, "ExceptionManager", "WriteLogToFile");
+			LogException(new ExceptionReference { exception = ex });
 		}
 	}
 }

@@ -16,7 +16,7 @@ using Godot;
 
 public static class FileSystemManager
 {
-	private static StringName CLASS_NAME = "FileSystemManager";
+	private static ExceptionReference exceptionReference = new ExceptionReference{ className = "FileSystemManager" };
 	// Fast File IO
 	/*
 	 * @object Fast File IO
@@ -40,26 +40,27 @@ public static class FileSystemManager
 	/// <param name="path">The path to the directory to check or create.</param>
 	public static void CreateDirectory(StringName path)
 	{
+		exceptionReference.methodName = "CreateDirectory";
 		var absBasePath = path.ToString().Split("://")[0] + "://";
 		var dirPath = path.ToString().GetBaseDir();
 		using var dir = DirAccess.Open(absBasePath);
 		if (dir == null) {
-			ExceptionManager.LogError(CLASS_NAME, "CreateDirectory", "Failed to open directory: " + absBasePath + " on " + absBasePath);
+			ExceptionManager.LogError(exceptionReference, "Failed to open directory: " + absBasePath + " on " + absBasePath);
 			return;
 		} else {
 			var openError = DirAccess.GetOpenError();
 			if (openError != Error.Ok) {
-				ExceptionManager.LogError(CLASS_NAME, "CreateDirectory", "Failed to open directory: " + absBasePath + " Error: " + openError);
+				ExceptionManager.LogError(exceptionReference, "Failed to open directory: " + absBasePath + " Error: " + openError);
 				return;
 			} else {
-				ExceptionManager.LogInfo(CLASS_NAME, "CreateDirectory", "Directory opened successfully: " + absBasePath);
+				ExceptionManager.LogInfo(exceptionReference, "Directory opened successfully: " + absBasePath);
 			
 				if (!dir.DirExists(dirPath)) {
 					var err = dir.MakeDir(dirPath);
 					if (err != Error.Ok) {
-						ExceptionManager.LogError(CLASS_NAME, "CreateDirectory", "Failed to create directory: " + dirPath + " Error: " + err);
+						ExceptionManager.LogError(exceptionReference, "Failed to create directory: " + dirPath + " Error: " + err);
 					} else {
-						ExceptionManager.LogInfo(CLASS_NAME, "CreateDirectory", "Directory created successfully: " + dirPath);
+						ExceptionManager.LogInfo(exceptionReference, "Directory created successfully: " + dirPath);
 					}
 				}
 			}
@@ -83,13 +84,15 @@ public static class FileSystemManager
 	/// </code></para>
 	public static void FFIOInit()
 	{
+		exceptionReference.methodName = "FFIOInit";
 		try {
 			if (FFIO == null) {
 				FFIO = new Godot.Collections.Dictionary<StringName, FileAccess>();
-				ExceptionManager.LogInfo(CLASS_NAME, "FFIOInit", "Initilized FFIO System");
+				ExceptionManager.LogInfo(exceptionReference, "Initilized FFIO System");
 			}
 		} catch (System.Exception ex) {
-			ExceptionManager.LogException(ex, CLASS_NAME, "FFIOInit");
+			exceptionReference.exception = ex;
+			ExceptionManager.LogException(exceptionReference);
 		}
 		
 	}
@@ -111,12 +114,14 @@ public static class FileSystemManager
 	/// </summary>
 	public static void FFIOShutdown()
 	{
+		exceptionReference.methodName = "FFIOShutdown";
 		foreach (var (path, file) in FFIO) {
-			ExceptionManager.LogInfo(CLASS_NAME, "FFIOShutdown", "Closing file: " + path);
+			ExceptionManager.LogInfo(exceptionReference, "Closing file: " + path);
 			try {
 				file.Flush();
 			} catch (Exception ex) {
-				ExceptionManager.LogError(CLASS_NAME, "FFIOShutdown", "Failed to flush file: " + path + " Exception: " + ex.Message);
+				exceptionReference.exception = ex;
+				ExceptionManager.LogError(exceptionReference, "Failed to flush file: " + path + " Exception: " + ex.Message);
 			}
 			file.Close();
 		}
@@ -137,36 +142,37 @@ public static class FileSystemManager
 	/// <param name="fileMode">The mode in which to open the file.</param>
 	public static void AddFastFile(StringName path, FileAccess.ModeFlags fileMode)
 	{
+		exceptionReference.methodName = "AddFastFile";
 		if (FFIO == null) {
-			ExceptionManager.LogError(CLASS_NAME, "AddFastFile", "FFIO has not been initilized yet. Please do so by running the 'FileSystemManager.FFIOInit()' in your '_Ready()' function");
+			ExceptionManager.LogError(exceptionReference, "FFIO has not been initilized yet. Please do so by running the 'FileSystemManager.FFIOInit()' in your '_Ready()' function");
 			return;
 		}
 
 		var pathString = path.ToString();
 		if (!FFIO.ContainsKey(path)) {
 			if (!pathString.GetFile().IsValidFileName()) {
-				ExceptionManager.LogError(CLASS_NAME, "AddFastFile", "The file name is not valid: " + pathString);
+				ExceptionManager.LogError(exceptionReference, "The file name is not valid: " + pathString);
 				return;
 			} else {
-				ExceptionManager.LogInfo(CLASS_NAME, "AddFastFile", "Validity check complete. Begin openning file: " + pathString);
+				ExceptionManager.LogInfo(exceptionReference, "Validity check complete. Begin openning file: " + pathString);
 				GD.Print(pathString.GetBaseDir() + pathString.GetFile());
 				using var file = FileAccess.Open(pathString, fileMode);
 				GD.Print(file);
 				GD.Print(fileMode);
 				if (file == null) {
-					ExceptionManager.LogError(CLASS_NAME, "AddFastFile", "Failed to open file: " + pathString);
+					ExceptionManager.LogError(exceptionReference, "Failed to open file: " + pathString);
 				} else {
 					if (file.GetError() != Error.Ok) {
-						ExceptionManager.LogError(CLASS_NAME, "AddFastFile", "Failed to open file: " + pathString + " Error: " + file.GetError());
+						ExceptionManager.LogError(exceptionReference, "Failed to open file: " + pathString + " Error: " + file.GetError());
 					} else
 					{
-						ExceptionManager.LogInfo(CLASS_NAME, "AddFastFile", "File has opened succesfully: " + pathString);
+						ExceptionManager.LogInfo(exceptionReference, "File has opened succesfully: " + pathString);
 						FFIO[path] = file;
 					}
 				}
 			}
 		} else {
-			ExceptionManager.LogError(CLASS_NAME, "AddFastFile", "The file is already in the FFIO system: " + pathString);
+			ExceptionManager.LogError(exceptionReference, "The file is already in the FFIO system: " + pathString);
 		}
 	}
 
@@ -183,8 +189,9 @@ public static class FileSystemManager
 	/// <param name="path">The path to the file to remove.</param>
 	public static void RemoveFastFile(StringName path)
 	{
+		exceptionReference.methodName = "RemoveFastFile";
 		if (FFIO == null) {
-			ExceptionManager.LogError(CLASS_NAME, "RemoveFastFile", "FFIO system is not initialized. Cannot remove file: " + path);
+			ExceptionManager.LogError(exceptionReference, "FFIO system is not initialized. Cannot remove file: " + path);
 			return;
 		}
 		CloseFile(path);
@@ -201,15 +208,17 @@ public static class FileSystemManager
 	/// </summary>
 	/// <returns>The FileAccess object for the requested file, or null if the file is not found.</returns>
 	public static FileAccess GetFastFile(StringName path)
-	{         
+	{
+		exceptionReference.methodName = "GetFastFile";
 		if (FFIO == null) {
-			ExceptionManager.LogError(CLASS_NAME, "GetFastFile", "FFIO system is not initialized. Cannot get file: " + path);
+			ExceptionManager.LogError(exceptionReference, "FFIO system is not initialized. Cannot get file: " + path);
 		} else {
 			try {
 				return FFIO[path];
 			} catch (Exception ex) {
-				ExceptionManager.LogError(CLASS_NAME, "GetFastFile", "The file is not in the FFIO system: " + path);
-				ExceptionManager.LogException(ex, CLASS_NAME, "GetFastFile");
+				exceptionReference.exception = ex;
+				ExceptionManager.LogError(exceptionReference, "The file is not in the FFIO system: " + path);
+				ExceptionManager.LogException(exceptionReference);
 			}
 		}
 		return null;
@@ -217,15 +226,16 @@ public static class FileSystemManager
 
 	public static void CloseFile(StringName path)
 	{
+		exceptionReference.methodName = "CloseFile";
 		if (FFIO == null) {
-			ExceptionManager.LogError(CLASS_NAME, "CloseFile", "FFIO system is not initialized. Cannot close file: " + path);
+			ExceptionManager.LogError(exceptionReference, "FFIO system is not initialized. Cannot close file: " + path);
 			return;
 		}
 		if (FFIO.ContainsKey(path)) {
 			FFIO[path].Close();
 			FFIO.Remove(path);
 		} else {
-			ExceptionManager.LogError(CLASS_NAME, "CloseFile", "The file is not in the FFIO system: " + path);
+			ExceptionManager.LogError(exceptionReference, "The file is not in the FFIO system: " + path);
 		}
 	}
 }

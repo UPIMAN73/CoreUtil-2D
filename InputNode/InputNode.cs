@@ -17,6 +17,9 @@ using Godot;
  [GlobalClass]
 public partial class InputNode : Node2D
 {
+	// Exception Reference
+	private ExceptionReference exceptionReference = new ExceptionReference{ className = "InputNode" };
+
 	// Default input mapping for the player
 	[Export]
 	private Godot.Collections.Dictionary<string, StringName> defaultKeyActionMapping = new Godot.Collections.Dictionary<string, StringName>()
@@ -71,11 +74,12 @@ public partial class InputNode : Node2D
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		exceptionReference.methodName = "_Ready";
 		FileSystemManager.FFIOInit();
-		ExceptionManager.LogInfo("InputNode", "Ready", "InputNode is being initialized");
+		ExceptionManager.LogInfo(exceptionReference,  "InputNode is being initialized");
 		InitilizeKeyActions();
 		LoadInputMapping("user://settings/input.json");
-		ExceptionManager.LogInfo("InputNode", "Ready", "InputNode has been initialized");
+		ExceptionManager.LogInfo(exceptionReference, "InputNode has been initialized");
 	}
 
 	// Handle user input
@@ -86,19 +90,20 @@ public partial class InputNode : Node2D
 
 	public override void _Input(InputEvent @event)
 	{
+		exceptionReference.methodName = "_Input";
 		if (@event is InputEventKey inputEventKey)
 		{
 			var keyInput = inputEventKey.AsText().Split("+");
 			foreach (string key in keyInput) 
 			{
-				ExceptionManager.LogInfo("InputNode", "Input", "Key pressed: " + key);
+				ExceptionManager.LogInfo(exceptionReference, "Key pressed: " + key);
 				if (keyActionMapping.Keys.Contains(key)) {
 					var keyAction = keyActionMapping[key];
-					ExceptionManager.LogInfo("InputNode", "Input", "Action " + keyAction + " triggered by key: " + key);
+					ExceptionManager.LogInfo(exceptionReference, "Action " + keyAction + " triggered by key: " + key);
 					// Deploy a signal so that other nodes can listen to the input actions and react accordingly
 					//SignalBus.EmitSignal("InputActionTriggered", keyAction);
 				} else {
-					ExceptionManager.LogWarning("InputNode", "Input", "No action found for key: " + key );
+					ExceptionManager.LogWarning(exceptionReference, "No action found for key: " + key );
 				}
 			}
 		}
@@ -111,6 +116,7 @@ public partial class InputNode : Node2D
 
 	private void InitInputMapping(Godot.Collections.Dictionary<string, StringName> dict, StringName eventType)
 	{
+		exceptionReference.methodName = "InitInputMapping";
 		switch(eventType)
 		{
 			case "keyboard":
@@ -129,7 +135,7 @@ public partial class InputNode : Node2D
 			break;
 
 			case "joystick":
-			ExceptionManager.LogWarning("InputNode", "InitInputMapping", "Joystick Compatability is not yet developed. Please wait until we finish our integration with Gamepads/Joysticks.");
+			ExceptionManager.LogWarning(exceptionReference, "Joystick Compatability is not yet developed. Please wait until we finish our integration with Gamepads/Joysticks.");
 			// foreach (var (name, action) in dict) {
 			// 	var @currentEvent = new InputEventKey();
 			// 	@currentEvent.PhysicalKeycode = OS.FindKeycodeFromString(name);
@@ -138,7 +144,7 @@ public partial class InputNode : Node2D
 			break;
 
 			default:
-			ExceptionManager.LogError("InputNode", "InitInputMapping", "Failed due to eventType not being a valid type: " + eventType);
+			ExceptionManager.LogError(exceptionReference, "Failed due to eventType not being a valid type: " + eventType);
 			break;
 		}
 	}
@@ -154,42 +160,43 @@ public partial class InputNode : Node2D
 	// Initilize the key action status based on the key action mappingCount
 	public void InitilizeKeyActions()
 	{
+		exceptionReference.methodName = "InitilizeKeyActions";
 		var kamCount = keyActionMapping.Count;
 		var mamCount = mouseActionMapping.Count;
 		var iamCount = inputActionMapping.Count;
 
 		// First check if the actions have been loaded
 		if (!IsActionsLoaded()) {
-			ExceptionManager.LogWarning("InputNode", "InitilizeKeyActions", 
+			ExceptionManager.LogWarning(exceptionReference, 
 										"None of the Actions have been previously defined. We are going to use the default input mapping.");
 			UpdateInputMapping(defaultKeyActionMapping, defaultMouseActionMapping, defaultInputActionMapping);
 		}
 		if (kamCount == 0) {
 			keyActionMapping = defaultKeyActionMapping;
-			ExceptionManager.LogInfo("InputNode", "InitilizeKeyActions", 
+			ExceptionManager.LogInfo(exceptionReference, 
 									 "Key Action Mapping has been initialized with the default mapping.");
 		} else {
-			ExceptionManager.LogInfo("InputNode", "InitilizeKeyActions", 
+			ExceptionManager.LogInfo(exceptionReference, 
 									 "Key Action Mapping has been initialized with the loaded mapping.");
 		}
 		InitInputMapping(keyActionMapping, "keyboard");
 
 		if (mamCount == 0) {
 			mouseActionMapping = defaultMouseActionMapping;
-			ExceptionManager.LogWarning("InputNode", "InitilizeKeyActions", 
+			ExceptionManager.LogWarning(exceptionReference, 
 										"Mouse Action Mapping has been initialized with the default mapping.");
 		} else {
-			ExceptionManager.LogInfo("InputNode", "InitilizeKeyActions", 
+			ExceptionManager.LogInfo(exceptionReference, 
 									 "Mouse Action Mapping has been initialized with the loaded mapping.");
 		}
 		InitInputMapping(mouseActionMapping, "mouse");
 
 		if (iamCount == 0) {
 			inputActionMapping = defaultInputActionMapping;
-			ExceptionManager.LogWarning("InputNode", "InitilizeKeyActions", 
+			ExceptionManager.LogWarning(exceptionReference, 
 										"Input Action Mapping has been initialized with the default mapping.");
 		} else {
-			ExceptionManager.LogInfo("InputNode", "InitilizeKeyActions", 
+			ExceptionManager.LogInfo(exceptionReference, 
 									 "Input Action Mapping has been initialized with the loaded mapping.");
 		}
 		InitInputMapping(inputActionMapping, "joystick");
@@ -208,11 +215,12 @@ public partial class InputNode : Node2D
 	// save the custom input mapping to a file
 	public void SaveInputMappingOld(string filePath) 
 	{
+		exceptionReference.methodName = "SaveInputMappingOld";
 		// using directory access to ensure that the file access can be writable
 		using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Write);
 		if (file == null) {
-			ExceptionManager.LogError("InputNode", "SaveInputMapping", "Error saving file: " + filePath);
-			ExceptionManager.LogError("InputNode", "SaveInputMapping", "Error: " + FileAccess.GetOpenError());
+			ExceptionManager.LogError(exceptionReference, "Error saving file: " + filePath);
+			ExceptionManager.LogError(exceptionReference, "Error: " + FileAccess.GetOpenError());
 			return;
 		} else {
 			if (file.GetError() == Error.Ok) {
@@ -225,7 +233,7 @@ public partial class InputNode : Node2D
 				file.StoreLine(Json.Stringify(inputMappingData));
 				file.Flush();
 			} else {
-				ExceptionManager.LogError("InputNode", "SaveInputMapping", 
+				ExceptionManager.LogError(exceptionReference, 
 										  "Error saving file: " + filePath + " Error: " + file.GetError().ToString());
 			}
 		}
@@ -234,9 +242,10 @@ public partial class InputNode : Node2D
 	// Load the custom input mapping from a file
 	public void LoadInputMappingOld(string filePath)
 	{
+		exceptionReference.methodName = "LoadInputMappingOld";
 		using var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Read);
 		if (file == null) {
-			ExceptionManager.LogError("InputNode", "LoadInputMapping", "Error reading file: " + filePath);
+			ExceptionManager.LogError(exceptionReference, "Error reading file: " + filePath);
 			return;
 		} else {
 			if (file.GetError() == Error.Ok)		{
@@ -252,7 +261,7 @@ public partial class InputNode : Node2D
 			// // Initilize the key actions based on the loaded mapping
 			// InitilizeKeyActions();
 			} else {
-				ExceptionManager.LogError("InputNode", "LoadInputMapping", 
+				ExceptionManager.LogError(exceptionReference, 
 										  "Error reading file: " + filePath + " Error: " + file.GetError().ToString());
 			}
 			file.Close();
@@ -261,11 +270,12 @@ public partial class InputNode : Node2D
 
 	public void SaveInputMapping(StringName filePath)
 	{
+		exceptionReference.methodName = "SaveInputMapping";
 		FileSystemManager.CreateDirectory(filePath);
 		FileSystemManager.AddFastFile(filePath, FileAccess.ModeFlags.Write);
 		var file = FileSystemManager.GetFastFile(filePath);
 		if (file == null) {
-			ExceptionManager.LogError("InputNode", "SaveInputMapping", "Error reading file: " + filePath);
+			ExceptionManager.LogError(exceptionReference, "Error reading file: " + filePath);
 		} else {
 			if (file.GetError() == Error.Ok) {
 				var inputMappingData = new Godot.Collections.Dictionary<string, Godot.Collections.Dictionary<string, StringName>>()
@@ -283,10 +293,11 @@ public partial class InputNode : Node2D
 
 	public void LoadInputMapping(StringName filePath)
 	{
+		exceptionReference.methodName = "LoadInputMapping";
 		FileSystemManager.AddFastFile(filePath, FileAccess.ModeFlags.Read);
 		var file = FileSystemManager.GetFastFile(filePath);
 		if (file == null) {
-			ExceptionManager.LogError("InputNode", "LoadInputMapping", "Error reading file: " + filePath);
+			ExceptionManager.LogError(exceptionReference, "Error reading file: " + filePath);
 		} else {
 			if (file.GetError() == Error.Ok) {
 				using var inputMappingData = Json.ParseString(file.GetAsText());
@@ -299,7 +310,7 @@ public partial class InputNode : Node2D
 				// Initilize the key actions based on the loaded mapping
 				InitilizeKeyActions();
 			} else {
-				ExceptionManager.LogError("InputNode", "LoadInputMapping", 
+				ExceptionManager.LogError(exceptionReference, 
 										  "Failed to read file: " + filePath + " Error: " + file.GetError().ToString());
 			}
 			// FileSystemManager.CloseFile(filePath); -- IGNORE ---
