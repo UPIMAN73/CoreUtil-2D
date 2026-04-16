@@ -57,8 +57,10 @@ public partial class Player : CoreEntity
 	/// </summary>
 	public void MovePlayer()
 	{
+		exceptionReference.methodName = "MovePlayer";
 		this.currentSpeed = this.shiftSpeed * this.runSpeed + this.walkSpeed;
 		this.Position += this.currentSpeed * this.direction;
+		ExceptionManager.LogDebug(exceptionReference, "Player moved to position: " + this.Position + " with speed: " + this.currentSpeed + " in direction: " + this.direction);
 	}
 
 	// Get the proper vector direction
@@ -79,11 +81,22 @@ public partial class Player : CoreEntity
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		// ExceptionManager.SetLogLevel(1); // Set log level to debug for development -- IGNORE ---
 		exceptionReference.methodName = "_Ready";
 		ExceptionManager.LogInfo(exceptionReference, "Initializing Key Actions");
 		initializeInputNode();
 		ExceptionManager.LogInfo(exceptionReference, "Player has been initialized");
 		ExceptionManager.LogInfo(exceptionReference, "Player's current position: " + this.Position);
+		// I can't believe I made this simple mistake and forgot to initialize the walk and run speed vectors before. 
+		// This is a critical issue that would have caused the player to not move at all, 
+		// so I'm glad I caught it before it was too late. 
+		// This is a good reminder to always double check that all variables are properly initialized before using them 
+		// in any calculations or logic.
+		// Note: 
+		// I totally didn't spend a few days trying to figure out why the player wasn't moving and then realized 
+		// that I forgot to initialize the walk and run speed vectors. =)
+		this.walkSpeed = new Vector2(5, 5);
+		this.runSpeed = new Vector2(5, 5);
 		RespawnPlayer();
 	}
 
@@ -98,6 +111,8 @@ public partial class Player : CoreEntity
 	/// </summary>
 	public override void _ExitTree()
 	{
+		exceptionReference.methodName = "_ExitTree";
+		ExceptionManager.LogInfo(exceptionReference, "Player is exiting the tree. Disconnecting signals and cleaning up.");
 		if (_inputNode != null) {
 			_inputNode.InputActionTriggered -= OnInputActionTriggered;
 		}
@@ -124,8 +139,8 @@ public partial class Player : CoreEntity
 			// Input Node doesn't exist here
 			ExceptionManager.LogWarning(exceptionReference, "Cannot find child node 'InputNode' of 'Player'.");
 			ExceptionManager.LogInfo(exceptionReference, "Player will need to create an 'InputNode' child node in order to handle player input.");
-			AddChild(new InputNode(), false);
-			_inputNode = GetNodeOrNull<InputNode>("InputNode");
+			_inputNode = new InputNode();
+			AddChild(_inputNode, false);
 			ExceptionManager.LogInfo(exceptionReference, "Created new 'InputNode' child node for 'Player'.");
 		} else {
 			ExceptionManager.LogInfo(exceptionReference, "Found 'InputNode' child node for 'Player'.");
@@ -136,8 +151,7 @@ public partial class Player : CoreEntity
 		if (_inputNode != null) {
 			_inputNode.InputActionTriggered += OnInputActionTriggered;
 		} else {
-			ExceptionManager.LogError(exceptionReference, "Failed to initialize 'InputNode' for 'Player'. Player input will not work.");
-			
+			ExceptionManager.LogCritical(exceptionReference, "Failed to initialize 'InputNode' for 'Player'. Player input will not work.");
 		}
 	}
 
@@ -147,11 +161,25 @@ public partial class Player : CoreEntity
 		MovePlayer();
 	}
 
+	/// <summary>
+	/// Updates the player's input state based on the current input from the InputNode.
+	/// This will be called whenever an input action is triggered by the player, and it will
+	/// update the player's direction and shift speed based on the input from the InputNode.
+	/// It will also log the process of updating the player's input in a way that is easy to read and understand.
+	/// <para><code>
+	/// player.UpdateInput();
+	/// </code></para>
+	/// <para>NOTE:</para>
+	/// <para>
+	/// This method is meant to be called whenever an input action is triggered by the player,
+	///  so that it updates the player's input state based on the new input action.
+	/// </para>
+	/// </summary>
 	 public void UpdateInput()
 	 {
+		exceptionReference.methodName = "UpdateInput";
 	 	(this.direction, this.shiftSpeed) = _inputNode.UpdateDirectionInput();
-	 	//this.direction = playerInput.Direction;
-	 	//this.runSpeed = playerInput.RunSpeed;
+		ExceptionManager.LogDebug(exceptionReference, "Player direction updated to: " + this.direction + " with shift speed: " + this.shiftSpeed);
 	 }
 
 	// Example of how to listen to the input action triggered signal and react accordingly
@@ -171,7 +199,7 @@ public partial class Player : CoreEntity
 	private void OnInputActionTriggered(StringName action) 
 	{
 		exceptionReference.methodName = "OnInputActionTriggered";
-		ExceptionManager.LogInfo(exceptionReference, "Input action triggered: " + action);
+		ExceptionManager.LogDebug(exceptionReference, "Input action triggered: " + action);
 		UpdateInput();
 	}
 }
