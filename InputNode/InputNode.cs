@@ -20,6 +20,10 @@ public partial class InputNode : Node2D
 	// Exception Reference
 	private ExceptionReference exceptionReference = new ExceptionReference{ className = "InputNode" };
 
+	// Setup a signal for the input action triggered so that other nodes can listen to it and react accordingly
+	[Signal]
+	public delegate void InputActionTriggeredEventHandler(StringName action);
+
 	// Default input mapping for the player
 	[Export]
 	private Godot.Collections.Dictionary<string, StringName> defaultKeyActionMapping = new Godot.Collections.Dictionary<string, StringName>()
@@ -101,7 +105,7 @@ public partial class InputNode : Node2D
 					var keyAction = keyActionMapping[key];
 					ExceptionManager.LogInfo(exceptionReference, "Action " + keyAction + " triggered by key: " + key);
 					// Deploy a signal so that other nodes can listen to the input actions and react accordingly
-					//SignalBus.EmitSignal("InputActionTriggered", keyAction);
+					EmitSignal(SignalName.InputActionTriggered, keyAction);
 				} else {
 					ExceptionManager.LogWarning(exceptionReference, "No action found for key: " + key );
 				}
@@ -301,13 +305,6 @@ public partial class InputNode : Node2D
 		} else {
 			if (file.GetError() == Error.Ok) {
 				using var inputMappingData = Json.ParseString(file.GetAsText());
-				GD.Print(inputMappingData);		
-				// Assignment mapping data to the current mapping
-				// this.keyActionMapping = inputMappingData["keyActionMapping"];
-				// this.mouseActionMapping = inputMappingData["mouseActionMapping"];
-				// this.inputActionMapping = inputMappingData["inputActionMapping"];
-
-				// Initilize the key actions based on the loaded mapping
 				InitilizeKeyActions();
 			} else {
 				ExceptionManager.LogError(exceptionReference, 
@@ -321,10 +318,6 @@ public partial class InputNode : Node2D
 			FileSystemManager.RemoveFastFile(filePath);
 		}
 	}
-
-	// Setup a signal for the input action triggered so that other nodes can listen to it and react accordingly
-	[Signal]
-	public delegate void InputActionTriggeredEventHandler(StringName action);
 
 	// Update Keyboard inputs
 	public (Vector2 Direction, float RunSpeed) UpdateDirectionInput() {
